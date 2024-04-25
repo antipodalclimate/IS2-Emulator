@@ -1,0 +1,52 @@
+% This code examines the angle of incidence of IS2 RGTs
+
+Data_folder = '../Data/Orbit-Data/'
+
+orbitlist = dir([Data_folder '*.kmz']); 
+
+dummy_struct = kmz2struct([orbitlist(1).folder '/' orbitlist(1).name]);
+
+%% Load in all orbit RGTs
+
+earthellipsoid = referenceSphere('earth','km');
+
+for i = 1:length(dummy_struct)
+   
+  
+    lats = dummy_struct(i).Lat; 
+    lons = dummy_struct(i).Lon; 
+
+% Formula for the azimuth 
+% azimuth(lat1,lon1,lat2,lon2,ellipsoid) 
+% atan2(x,y) 
+% x = sin(dlon)cos(lat2)
+% y = cos(lat1)sin(lat2) - sin(lat1)cos(lat2)cos(dlon)
+
+    orientations{i} = azimuth(lats(1:end-1),lons(1:end-1),lats(2:end),lons(2:end),earthellipsoid);
+    latvals{i} = 0.5*(lats(1:end-1) + lats(2:end));
+
+end
+
+%% Form a PDF of incidence angle as a function of latitude
+
+orientations = cell2mat(orientations);
+
+latvals = cell2mat(latvals);
+
+% Discretize to 0.05 degree
+latvals = floor(latvals*20)/20; 
+
+[val,~,locs] = unique(latvals); 
+
+
+
+
+
+
+
+
+
+%% Save this for use with the emulator
+
+
+
