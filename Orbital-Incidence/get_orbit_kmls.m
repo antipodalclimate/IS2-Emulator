@@ -1,6 +1,11 @@
 % This code examines the angle of incidence of IS2 RGTs
 
-Data_folder = '../Data/Orbit-Data/';
+% Set these personally
+Data_folder = '/Users/chorvat/Code/IS2-Emulator/Data/Orbit-Data/';
+Plot_folder = '/Users/chorvat/Dropbox (Brown)/Research Projects/Plot-Tools';
+
+addpath(Plot_folder)
+addpath(Data_folder)
 
 %% Load in all orbit RGTs
 
@@ -40,23 +45,68 @@ latvals = cell2mat(latvals);
 
 %% Form a PDF of incidence angle as a function of latitude
 
+% Discretize to every disc degree
+disc = 1; % degrees
+lat_vals = floor(latvals*(1/disc))*disc;
 
-% Discretize to 0.1 degree
-latvals = floor(latvals*5)/5;
+[vals,~,locs] = unique(lat_vals);
 
-[val,~,locs] = unique(latvals);
+
+
 
 neach = accumarray(locs,1);
 
-orients = 1:180; 
+% Azimuth discretization for plotting/use
+orients = 1:disc:180; 
+orient_disc = 0.5*(orients(1:end-1) + orients(2:end));
 
-for i = 1:length(val)
+% Latitude discretization
+lat_disc = 65:disc:87; 
 
-    ohist(i,:) = histcounts(orientations(latvals == val(i)),orients,'Normalization','percentage');
+orientation_hist = nan(length(val),length(orients)-1);
+
+for i = 1:length(lat_disc)
+
+    orientation_hist(i,:) = histcounts(orientations(lat_vals == lat_disc(i)),orients,'Normalization','probability');
 
 end
 
+
+%% Make a supporting figure
+
+subplot(211)
+pcolor(orient_disc,lat_disc,orientation_hist);
+shading flat; 
+
+ylabel('Latitude');
+xlabel('Azimuth')
+title('Azimuth pdf by latitude','fontname','helvetica','fontsize',12)
+colormap(cmocean('thermal'))
+clim([0 1])
+grid on; box on; 
+set(gca,'fontname','helvetica','fontsize',9,'xminortick','on','yminortick','on')
+
+subplot(212)
+
+plot(orient_disc,orientation_hist(lat_disc == 70,:),'linewidth',1,'color','k')
+hold on
+plot(orient_disc,orientation_hist(lat_disc == 80,:),'linewidth',1,'color','b')
+plot(orient_disc,orientation_hist(lat_disc == 87,:),'linewidth',1,'color','r')
+hold off
+xlabel('Azimuth');
+ylabel('PDF');
+grid on; box on; 
+set(gca,'fontname','helvetica','fontsize',9,'xminortick','on','yminortick','on')
+
+legend('70N','80N','87N','Location','best')
+
+pos = [6.5 3.5]; 
+set(gcf,'windowstyle','normal','position',[0 0 pos],'paperposition',[0 0 pos],'papersize',pos,'units','inches','paperunits','inches');
+set(gcf,'windowstyle','normal','position',[0 0 pos],'paperposition',[0 0 pos],'papersize',pos,'units','inches','paperunits','inches');
+
+print('/Users/chorvat/Dropbox (Brown)/Apps/Overleaf/IS2-Concentration-Part-2/Figures/SI-azimuth.pdf','-dpdf','-r1200');
+
 %% Save this for use with the emulator
 
-
+save('Orientation_Histograms','orientation_hist','orient_disc','lat_disc')
 
