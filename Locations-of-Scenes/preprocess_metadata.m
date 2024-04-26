@@ -77,5 +77,5 @@ end
 %%
 
 
-save('Image_Metadata','image_latitude','image_longitude','image_SIC','image_MPF','image_timer','image_location')
+save([Code_folder '/' 'Image_Metadata'],'image_latitude','image_longitude','image_SIC','image_MPF','image_timer','image_location')
 
