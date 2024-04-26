@@ -46,12 +46,10 @@ latvals = cell2mat(latvals);
 %% Form a PDF of incidence angle as a function of latitude
 
 % Discretize to every disc degree
-disc = 1; % degrees
+disc = .25; % degrees
 lat_vals = floor(latvals*(1/disc))*disc;
 
 [vals,~,locs] = unique(lat_vals);
-
-
 
 
 neach = accumarray(locs,1);
@@ -63,7 +61,7 @@ orient_disc = 0.5*(orients(1:end-1) + orients(2:end));
 % Latitude discretization
 lat_disc = 65:disc:87; 
 
-orientation_hist = nan(length(val),length(orients)-1);
+orientation_hist = nan(length(lat_disc),length(orients)-1);
 
 for i = 1:length(lat_disc)
 
