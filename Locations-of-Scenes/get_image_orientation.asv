@@ -11,3 +11,12 @@ addpath(Data_folder)
 
 load('Image_Metadata.mat');
 
+% List all hdf5 images
+image_list = dir([Data_folder '*/*/*/*.h5']);
+
+for i = 1:1
+
+   imageID = str2num(image_list(i).name(1:5)); 
+
+end
+

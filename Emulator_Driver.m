@@ -15,5 +15,9 @@ get_orbit_kmls;
 % Now the image metadata
 addpath('Locations-of-Scenes/')
 preprocess_metadata; % This generates a list of summary statistics of each image
+% Note one thing - in July 17 2024, one entry is repeated (image number
+% 4405). I delete this before running this code, but it is not necessary to
+% do so if the data is downloaded fresh. 
+
 
 
