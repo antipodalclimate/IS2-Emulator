@@ -41,6 +41,7 @@ end
 %%
 
 for i = 1:10
+    %%
 
     if image_done(i) == 0
 
@@ -130,11 +131,10 @@ for i = 1:10
         yinit = sample_y - L*sin(elevation_angle);
 
 
-
         %% Initially crossing the image, display things
 
 
-        plotting = 1;
+        plotting = 0;
 
         if plotting == 1
 
@@ -156,11 +156,30 @@ for i = 1:10
 
         for j = 1:n_crossings
 
+            if parametric_lines
+            % Parametric Values of intersection points
+            xvals = round(linspace(xinit(j),xend(j),5*(nx+ny)));
+            yvals = round(linspace(yinit(j),yend(j),5*(nx+ny)));
+
+            usable = (xvals > 0 & xvals <= nx & yvals > 0 & yvals <= ny); 
+            xvals = xvals(usable); 
+            yvals = yvals(usable);
+
+            % These are actual coordinates/indices
+            coords = unique([xvals; yvals]','rows','stable'); 
             
+            coords = sub2ind([nx,ny],)
+
+            measured = zeros(size(measured_map)); 
+            measured(coords) = 1; 
+
+            else
 
             % use only those points that are not nan for distance computation
             d = point_to_line([Xmeas Ymeas],[xinit(j) yinit(j)],[xend(j) yend(j)]);
             measured = d < 1;
+
+            end
 
             measured_map(measurable) = measured_map(measurable) + measured;
 
@@ -203,7 +222,7 @@ for i = 1:10
         %%
         image_done(i) = 1;
 
-        save([Code_folder '/Emulator_Data'],'length_measured','sample_orients','length_ice_measured','true_SIC,true_OW,EB_SIC,EB_MPF','image_done')
+        save([Code_folder '/Emulator_Data'],'length_measured','image_done','sample_orients','length_ice_measured','true_SIC,true_OW,EB_SIC,EB_MPF','image_done')
 
 
     end

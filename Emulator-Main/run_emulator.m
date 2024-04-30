@@ -41,6 +41,7 @@ end
 %%
 
 for i = 1:10
+    %%
 
     if image_done(i) == 0
 
@@ -146,34 +147,75 @@ for i = 1:10
 
             xscale = nx/ny;
 
-            subplot('position',[.1 .4 xscale*.5 .5])
+            Ax_surf = subplot('position',[.1 .4 xscale*.5 .5]);
             imagesc(surface_class'); % show the image itself.
             set(gca,'YDir','normal')
             hold on
 
         end
-c
+
+        parametric_lines = 0; 
+
+        measured_map = zeros(size(surface_class)); 
+
         for j = 1:n_crossings
 
+            if parametric_lines
+
+            subplot('position',[.5 .05 xscale*.4 .3])
+                
+                %%
+            % Parametric Values of intersection points
+            xvals = round(linspace(xinit(j),xend(j),5*(nx+ny)));
+            yvals = round(linspace(yinit(j),yend(j),5*(nx+ny)));
+
+            usable = (xvals > 0 & xvals <= nx & yvals > 0 & yvals <= ny); 
+            xvals = xvals(usable); 
+            yvals = yvals(usable);
+
+            % These are actual coordinates/indices
+            coords = unique([xvals; yvals]','rows','stable'); 
             
-
-            % use only those points that are not nan for distance computation
-            d = point_to_line([Xmeas Ymeas],[xinit(j) yinit(j)],[xend(j) yend(j)]);
-            measured = d < 1;
-
-            measured_map(measurable) = measured_map(measurable) + measured;
+            
+            coord_ind = sub2ind(size(measured),coords(:,1),coords(:,2));
+            measured_map(coord_ind) =  measured_map(coord_ind) + 1; 
+            
+            % Total IS-2 length is all those points close to the line
+            length_measured(i,j) = sum(surface_class(coord_ind) > 0);
+            % Length of ice measured is the close points that are ice
+            length_ice_measured(i,j) = sum(surface_class(coord_ind) == 1);
 
             if plotting == 1
-                scatter(sample_x(j),sample_y(j),150,'r','filled')
-                plot([xinit(j) xend(j)],[yinit(j) yend(j)]);
+
+            imagesc(measured_map')
+            drawnow; 
+            set(gca,'YDir','normal')
+
+            end
+
+            else
+
+                % use only those points that are not nan for distance computation
+                d = point_to_line([Xmeas Ymeas],[xinit(j) yinit(j)],[xend(j) yend(j)]);
+                measured = d < 1;
+                measured_map(measurable) = measured_map(measurable) + measured;
+
+                % Total IS-2 length is all those points close to the line
+                length_measured(i,j) = sum(class_measurable(measured) > 0);
+                % Length of ice measured is the close points that are ice
+                length_ice_measured(i,j) = sum(class_measurable(measured) == 1);
+              
+
+            end
+
+            if plotting == 1
+
+                scatter(Ax_surf,sample_x(j),sample_y(j),150,'r','filled')
+                plot(Ax_surf,[xinit(j) xend(j)],[yinit(j) yend(j)]);
                 drawnow
 
             end
 
-            % Total IS-2 length is all those points close to the line
-            length_measured(i,j) = sum(class_measurable(measured) > 0);
-            % Length of ice measured is the close points that are ice
-            length_ice_measured(i,j) = sum(class_measurable(measured) == 1);
 
 
         end
@@ -194,15 +236,15 @@ c
             end
 
             plot(mean(est,2) - true_SIC(i),'k','linewidth',2); 
-            plot(std(est,[],2),'--','color',[.8 .8 .8]); 
-            plot(-std(est,[],2),'--','color',[.8 .8 .8]); 
+            plot(mean(est,2) - true_SIC(i) + std(est,[],2),'--','color',[.8 .8 .8]); 
+            plot(mean(est,2) - true_SIC(i) -std(est,[],2),'--','color',[.8 .8 .8]); 
             hold off
         end
 
         %%
         image_done(i) = 1;
 
-        save([Code_folder '/Emulator_Data'],'length_measured','sample_orients','length_ice_measured','true_SIC,true_OW,EB_SIC,EB_MPF','image_done')
+        save([Code_folder '/Emulator_Data'],'length_measured','image_done','sample_orients','length_ice_measured','true_SIC,true_OW,EB_SIC,EB_MPF','image_done')
 
 
     end
