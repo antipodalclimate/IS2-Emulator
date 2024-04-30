@@ -152,7 +152,7 @@ for i = 1:10
             hold on
 
         end
-
+c
         for j = 1:n_crossings
 
             
