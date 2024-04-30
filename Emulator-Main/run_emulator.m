@@ -19,16 +19,37 @@ load('Image_Metadata.mat');
 load('Orientation_Histograms.mat')
 
 n_crossings = 50;
-n_images = 1; 
+n_images = length(image_location); 
 
-[length_all,sample_orients,length_ice] = nan(n_images,n_crossings);
-[true_SIC,true_OW] = nan(n_images);
+% Initialize data
 
-for i = 1:n_images
+try load([Code_folder '/Emulator_output'])
+
+    disp('Loaded data')
+    fprintf('Have done %d images out of %d \n',sum(image_done),length(image_done));
+
+catch errload
+    
+    disp('No data yet')
+    [length_measured,sample_orients,length_ice_measured] = deal(nan(n_images,n_crossings));
+    [true_SIC,true_OW,EB_SIC,EB_MPF] = deal(nan(n_images,1));
+    image_done = zeros(n_images,1);
+
+end
+
+
+%%
+
+for i = 1:10
+
+    if image_done(i) == 0
+
+    fprintf('Image Number %d \n',i);
 
     %%
     surface_class = (h5read(image_location{i},'/classification'));
-
+    EB_SIC(i) = image_SIC(i); 
+    EB_MPF(i) = image_MPF(i); 
     %% 
 
     % All scene points that have ice/ocean data
@@ -43,12 +64,16 @@ for i = 1:n_images
     true_SIC(i) = sum(class_measurable == 1)./sum(class_measurable > 0);
 
 
-
     % Gridding things
     [nx,ny] = size(surface_class);
     X = 1:nx;
     Y = 1:ny;
     [Xgrid,Ygrid] = meshgrid(X,Y);
+  
+    % This gridding swaps rows and columns. So we take the transpose to
+    % make it have the same dimensions as the data
+    Xgrid = Xgrid'; 
+    Ygrid = Ygrid'; 
 
     % Smaller subdomain which is x/y points that have data
     Xmeas = Xgrid(measurable);
@@ -70,14 +95,19 @@ for i = 1:n_images
 
     % Interpolate the cdf/samples to get the orientations
     sample_orients(i,:) = interp1(cum_pdf,orient_disc,samples,'nearest');
-    
+
+    % Dummy input
+    % disp('Overwriting Sample Orientation Angles to 0'); 
+    % sample_orients(i,:) = 0; 
+
+
     % Take a random set of X/Y points that are in the domain as tie points
     sample_points = randi(numel(Xmeas),[n_crossings 1]);
     % Only allow x/y samples that are actually measured. This may have a
     % slight bias in the tie points if there are more X than Y points - not
     % 100% sure. It might not. 
-    sample_x = Xmeas(sample_points);
-    sample_y = Ymeas(sample_points);
+    sample_x = Xmeas(sample_points)';
+    sample_y = Ymeas(sample_points)';
     
     % Longer than the image size. We just want to create the endpoints of
     % our "IS2" track intersecting the image
@@ -85,49 +115,58 @@ for i = 1:n_images
 
     % Start with a random image point and trace the line with the correct
     % orientation w.r.t. true north backwards and forwards.
-    xend = sample_x + L*cos(sample_orients);
-    xinit = sample_x - L*cos(sample_orients);
+
+    % Orientation angles are taken from North, not from East. For a right
+    % triangle the azimuth plus the altitude is pi/2. So we subtract
+    % the sampled azimuths from pi/2 to get the altitude angle. 
+    elevation_angle = pi/2 - sample_orients(i,:);
+
+    xend = sample_x + L*cos(elevation_angle);
+    xinit = sample_x - L*cos(elevation_angle);
 
     % Same for y points
-    yend = sample_y + L*sin(sample_orients);
-    yinit = sample_y - L*sin(sample_orients);
+    yend = sample_y + L*sin(elevation_angle);
+    yinit = sample_y - L*sin(elevation_angle);
 
    
     %% Initially crossing the image, display things
     close 
 
+
     subplot(311)
-    histogram(sample_orients,1:180);
+    histogram(sample_orients(i,:),1:180);
     xlabel('Orientation Angle')
     ylabel('Histogram')
     grid on; box on; 
 
     subplot('position',[.1 .1 .8 .5])
     imagesc(X,Y,surface_class); % show the image itself. 
+    % set(gca,'YDir','normal')
     hold on
 
-    for j = 1:n_crossings
+    for j = 7:9
 
         % use only those points that are not nan for distance computation
         d = point_to_line([Xmeas Ymeas],[xinit(j) yinit(j)],[xend(j) yend(j)]);
         measured = d < 1;
         measured_map(measurable) = measured_map(measurable) + measured; 
-        scatter(xinit(1),yinit(1),10,'filled')
+        scatter(sample_x(j),sample_y(j),50,'filled')
         plot([xinit(j) xend(j)],[yinit(j) yend(j)]);
 
         % Total IS-2 length is all those points close to the line
         length_measured(i,j) = sum(class_measurable(measured) > 0);
         % Length of ice measured is the close points that are ice
-        icearea_measured(i,j) = sum(class_measurable(measured) == 1);
+        length_ice_measured(i,j) = sum(class_measurable(measured) == 1);
 
         drawnow
     
     end
+    
+    image_done(i) = 1; 
 
-    %%
- 
+    save([Code_folder '/Emulator_Data'],'length_measured,sample_orients,length_ice_measured','true_SIC,true_OW,EB_SIC,EB_MPF','image_done')
 
 
-
+    end
 
 end
