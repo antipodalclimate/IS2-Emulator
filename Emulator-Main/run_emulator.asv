@@ -42,6 +42,8 @@ end
 
 for i = 1:10
 
+    measured_map = zeros(size(surface_class));
+
     if image_done(i) == 0
 
     fprintf('Image Number %d \n',i);
@@ -56,13 +58,11 @@ for i = 1:10
     measurable = surface_class > 0;
    
     % initial map showing the locations which are hit by IS2
-    measured_map = zeros(size(surface_class));
 
     % Specification of classified points that are measured
     class_measurable = surface_class(measurable);
 
     true_SIC(i) = sum(class_measurable == 1)./sum(class_measurable > 0);
-
 
     % Gridding things
     [nx,ny] = size(surface_class);
@@ -97,8 +97,8 @@ for i = 1:10
     sample_orients(i,:) = interp1(cum_pdf,orient_disc,samples,'nearest');
 
     % Dummy input
-    disp('Overwriting Sample Orientation Angles to 0'); 
-    sample_orients(i,:) = 0; 
+    % disp('Overwriting Sample Orientation Angles to 0'); 
+    % sample_orients(i,:) = 0; 
 
 
     % Take a random set of X/Y points that are in the domain as tie points
@@ -116,15 +116,17 @@ for i = 1:10
     % Start with a random image point and trace the line with the correct
     % orientation w.r.t. true north backwards and forwards.
 
-    % Orientation angles are taken from North, not from East. So we have to
-    % increase the angle by pi/2. 
+    % Orientation angles are taken from North, not from East. For a right
+    % triangle the azimuth plus the altitude is pi/2. So we subtract
+    % the sampled azimuths from pi/2 to get the altitude angle. 
+    elevation_angle = pi/2 - sample_orients(i,:);
 
-    xend = sample_x + L*cos(sample_orients(i,:) + pi/2);
-    xinit = sample_x - L*cos(sample_orients(i,:)+ pi/2);
+    xend = sample_x + L*cos(elevation_angle);
+    xinit = sample_x - L*cos(elevation_angle);
 
     % Same for y points
-    yend = sample_y + L*sin(sample_orients(i,:));
-    yinit = sample_y - L*sin(sample_orients(i,:));
+    yend = sample_y + L*sin(elevation_angle);
+    yinit = sample_y - L*sin(elevation_angle);
 
    
     %% Initially crossing the image, display things
@@ -142,14 +144,18 @@ for i = 1:10
     % set(gca,'YDir','normal')
     hold on
 
-    for j = 7:9
+    parfor j = 7:9
 
         % use only those points that are not nan for distance computation
         d = point_to_line([Xmeas Ymeas],[xinit(j) yinit(j)],[xend(j) yend(j)]);
         measured = d < 1;
-        measured_map(measurable) = measured_map(measurable) + measured; 
-        scatter(sample_x(j),sample_y(j),50,'filled')
-        plot([xinit(j) xend(j)],[yinit(j) yend(j)]);
+                
+        measmap = 0*measured_map; 
+        measmap(measurable) = measured; 
+
+        measured_map = measured_map + measmap; 
+        % scatter(sample_x(j),sample_y(j),50,'filled')
+        % plot([xinit(j) xend(j)],[yinit(j) yend(j)]);
 
         % Total IS-2 length is all those points close to the line
         length_measured(i,j) = sum(class_measurable(measured) > 0);
@@ -162,7 +168,7 @@ for i = 1:10
     
     image_done(i) = 1; 
 
-    save([Code_folder '/Emulator_Data'],'length_measured,sample_orients,length_ice_measured','true_SIC,true_OW,EB_SIC,EB_MPF','image_done')
+    save([Code_folder '/Emulator_Data'],'length_measured','sample_orients','length_ice_measured','true_SIC,true_OW,EB_SIC,EB_MPF','image_done')
 
 
     end

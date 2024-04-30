@@ -144,14 +144,15 @@ for i = 1:10
     % set(gca,'YDir','normal')
     hold on
 
-    for j = 7:9
+    parfor j = 7:9
 
         % use only those points that are not nan for distance computation
         d = point_to_line([Xmeas Ymeas],[xinit(j) yinit(j)],[xend(j) yend(j)]);
         measured = d < 1;
+
         measured_map(measurable) = measured_map(measurable) + measured; 
-        scatter(sample_x(j),sample_y(j),50,'filled')
-        plot([xinit(j) xend(j)],[yinit(j) yend(j)]);
+        % scatter(sample_x(j),sample_y(j),50,'filled')
+        % plot([xinit(j) xend(j)],[yinit(j) yend(j)]);
 
         % Total IS-2 length is all those points close to the line
         length_measured(i,j) = sum(class_measurable(measured) > 0);
@@ -164,7 +165,7 @@ for i = 1:10
     
     image_done(i) = 1; 
 
-    save([Code_folder '/Emulator_Data'],'length_measured,sample_orients,length_ice_measured','true_SIC,true_OW,EB_SIC,EB_MPF','image_done')
+    save([Code_folder '/Emulator_Data'],'length_measured','sample_orients','length_ice_measured','true_SIC,true_OW,EB_SIC,EB_MPF','image_done')
 
 
     end
