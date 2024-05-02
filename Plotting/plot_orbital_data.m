@@ -1,3 +1,4 @@
+function plot_orbital_data(Figure_folder,orientation_hist,lat_disc,orient_disc)
 % Code to plot a supporting figure for orbital data
 
 subplot(211)
@@ -30,4 +31,4 @@ pos = [6.5 3.5];
 set(gcf,'windowstyle','normal','position',[0 0 pos],'paperposition',[0 0 pos],'papersize',pos,'units','inches','paperunits','inches');
 set(gcf,'windowstyle','normal','position',[0 0 pos],'paperposition',[0 0 pos],'papersize',pos,'units','inches','paperunits','inches');
 
-print('/Users/chorvat/Dropbox (Brown)/Apps/Overleaf/IS2-Concentration-Part-2/Figures/SI-azimuth.pdf','-dpdf','-r1200');
+print([Figure_folder '/SI-azimuth.pdf'],'-dpdf','-r1200');

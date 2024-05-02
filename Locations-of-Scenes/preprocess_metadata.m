@@ -1,6 +1,8 @@
-%% Import data from text file
+%% Import data from text files
 
-imagery_metadata = dir([Data_folder 'NOAA*.txt']);
+savestr = [Metadata_folder '/' 'Image_Metadata'];
+
+imagery_metadata = dir([Data_folder '/NOAA*.txt']);
 
 %% Set up the Import Options and import the data
 opts = delimitedTextImportOptions("NumVariables", 12);
@@ -50,7 +52,7 @@ image_longitude = cell2mat(image_longitude);
 clear opts
 
 %% Get entire list of images
-image_list = dir([Data_folder '*/*/*/*.h5']);
+image_list = dir([Data_folder '/*/*/*/*.h5']);
 
 image_location = cell(size(image_latitude));
 used = zeros(size(image_latitude));
@@ -76,6 +78,6 @@ end
 
 %%
 
-
-save([Code_folder '/' 'Image_Metadata'],'image_latitude','image_longitude','image_SIC','image_MPF','image_timer','image_location')
+fprintf('Image metadata saved to %s \n',savestr)
+save(savestr,'image_latitude','image_longitude','image_SIC','image_MPF','image_timer','image_location')
 

@@ -2,20 +2,22 @@
 savestr = [Orbit_folder '/Orientation_Histograms']; 
 
 disp('Creating Histograms of Azimuthal angles from IS2 KMLs')
-fprintf('Output saved at %s.mat \n',savestr)
 
 %% Load in all orbit RGTs
 
 earthellipsoid = referenceSphere('earth','km');
 
-orbit_struct = kmz2struct([Orbit_folder 'Arctic_repeat1_GT7.kmz']);
+disp('Loading KML Data');
+orbit_struct = kmz2struct([Data_folder '/Orbit-Data/Arctic_repeat1_GT7.kmz']);
+disp('Done')
 
 %%
 orientations = cell(1);
 latvals = cell(1);
 
 for i = 1:length(orbit_struct)
-
+    
+    fprintf('.')
     lats = orbit_struct(i).Lat;
     lons = orbit_struct(i).Lon;
 
@@ -70,3 +72,4 @@ end
 
 save(savestr,'orientation_hist','orient_disc','lat_disc')
 
+fprintf('\n Output saved at %s.mat \n',savestr)

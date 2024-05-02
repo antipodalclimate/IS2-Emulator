@@ -1,11 +1,6 @@
+function plot_single_image(Figure_folder,image_location,image_done,true_SIC,length_ice_measured,length_measured,sample_orients)
+
 % This produces a bias plot
-
-Code_folder = '/Users/chorvat/Code/IS2-Emulator';
-
-addpath(Code_folder);
-
-load([Code_folder '/Emulator_Data']);
-load('Image_Metadata.mat');
 
 usable = find(image_done == 1 & true_SIC > .6);
 
@@ -36,11 +31,6 @@ end
 
 
 SIC_bias = bsxfun(@minus,true_SIC,observed_SIC);
-SIC_bias_perimage = squeeze(mean(SIC_bias,2));
-SIC_bias_std_perimage = squeeze(std(SIC_bias,[],2));
-
-SIC_abs_bias_perimage = squeeze(mean(abs(SIC_bias),2));
-SIC_abs_bias_std_perimage = squeeze(std(abs(SIC_bias),[],2));
 
 %% First plot is of the image itself
 
@@ -123,7 +113,7 @@ Ax{2} = subplot('position',[.625 .7 .35 .2]);
 
 edges = 1:2:180; 
 p = histcounts(sample_orients(image_ind,:),1:2:180); 
-p = p / sum(p)
+p = p / sum(p);
 centers = 0.5*(edges(1:end-1) + edges(2:end)); 
 
 bar(centers,p,'EdgeColor',[.8 .4 .4],'Facecolor',[.8 .4 .4]);
@@ -181,40 +171,4 @@ end
 pos = [6.5 4];
 set(gcf,'windowstyle','normal','position',[0 0 pos],'paperposition',[0 0 pos],'papersize',pos,'units','inches','paperunits','inches');
 set(gcf,'windowstyle','normal','position',[0 0 pos],'paperposition',[0 0 pos],'papersize',pos,'units','inches','paperunits','inches');
-print('~/Library/CloudStorage/Dropbox-Brown/Apps/Overleaf/IS2-Concentration/Figures/emulator-example.pdf','-dpdf','-r1200');
-
-
-%%
-%
-
-
-
-subplot(211)
-
-mean_bias = mean(SIC_bias_perimage,1);
-mean_std = mean(SIC_bias_std_perimage,1);
-mean_abs_bias = mean(SIC_abs_bias_perimage,1);
-
-plot(1:n_crossings,mean_bias)
-grid on; box on;
-hold on
-
-plot(1:n_crossings,mean_abs_bias,'k','linewidth',1)
-plot(1:n_crossings,mean_bias + mean_std,'--k','linewidth',1)
-plot(1:n_crossings,mean_bias - mean_std,'--k','linewidth',1)
-xlim([1 20])
-yline(.025,'--r');
-
-subplot(223)
-plot(1:n_crossings,squeeze(SIC_bias(1,:,:))','linewidth',0.2,'Color',[.8 .8 .8])
-hold on
-plot(1:n_crossings,mean(squeeze(SIC_bias(1,:,:)),2),'linewidth',1,'Color','k')
-plot(1:n_crossings,mean(squeeze(SIC_bias(1,:,:)),2) + std(squeeze(SIC_bias(1,:,:)),[],1)','--','linewidth',1,'Color','k')
-plot(1:n_crossings,mean(squeeze(SIC_bias(1,:,:)),2) - std(squeeze(SIC_bias(1,:,:)),[],1)','--','linewidth',1,'Color','k')
-plot(1:n_crossings,(squeeze(SIC_bias(1,1,:))),'linewidth',1,'Color','b')
-yline(0,'r')
-grid on; box on;
-xlim([1 20])
-
-
-
+print([Figure_folder '/emulator-example.pdf'],'-dpdf','-r1200');

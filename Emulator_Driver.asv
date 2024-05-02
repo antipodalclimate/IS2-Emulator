@@ -7,8 +7,9 @@ close all
 
 % Locations of various subfolders. Change if necessary.  
 Code_folder = pwd;
+Data_folder = [Code_folder '/Data']; % Data is not included in the Github repo and so this should likely be edited on your local machine
 Orbit_folder = [Code_folder '/Orbital-Incidence'];
-Metadata_folder = [Code_folder '/Location-of-Scenes'];
+Metadata_folder = [Code_folder '/Locations-of-Scenes'];
 Emulator_folder = [Code_folder '/Emulator-Main'];
 Plotting_folder = [Code_folder '/Plotting']; 
 
@@ -36,26 +37,32 @@ end
 
 %%
 % Now the image metadata
+clearvars -except *_folder
 
 try load([Metadata_folder '/Image_Metadata.mat'])
 
+        fprintf(' \nLoaded Image MetaData for %d Images \n',length(image_SIC));
+
 catch errload
 
+    disp('Creating Image metadata');
     addpath(Metadata_folder)
     preprocess_metadata; % This generates a list of summary statistics of each image
     % Note one thing - in July 17 2024, one entry is repeated (image number
     % 4405). I delete this before running this code, but it is not necessary to
     % do so if the data is downloaded fresh.
-
+    fprintf('\nCreated Image MetaData for %d Images \n',length(image_SIC));
+    
 end
 
 %% Now do the actual emulation
 
-
-
 try load([Emulator_folder '/Emulator_Data.mat'])
     
+    disp('Loaded Existing Emulation Data')
     
+    fprintf('%d out of %d images have been analysed',sum(~isnan(image_SIC)),length)
+
 
 catch errload
 
