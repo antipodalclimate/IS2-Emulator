@@ -58,6 +58,7 @@ for block_ind = 1:nblocks
     disp('------------------------------');
 
     blockids = block_length*(block_ind - 1) + 1 :block_length*block_ind;
+    blockids(blockids > length(image_done)) = []; 
 
     % Initialize temporary variables
     TEMP_image_done = image_done(blockids); 
@@ -67,7 +68,7 @@ for block_ind = 1:nblocks
     TEMP_sample_orients = sample_orients(blockids,:);
 
     % Parallelize the sub-blocks
-    parfor block_subind = 1:block_length
+    parfor block_subind = 1:length(blockids); 
 
         % Index of the image itself
         image_ind = block_length*(block_ind - 1) + block_subind;
