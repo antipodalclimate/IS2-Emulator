@@ -295,7 +295,7 @@ for block_ind = 1:nblocks
     true_SIC(blockids) = TEMP_true_SIC;
     sample_orients(blockids,:) = TEMP_sample_orients;
 
-    save([Code_folder '/Emulator_Data'],'image_location','length_measured','length_ice_measured','image_done','sample_orients','true_SIC','image_done')
+    save([Code_folder '/Emulator-Main/Emulator_Data'],'image_location','length_measured','length_ice_measured','image_done','sample_orients','true_SIC','image_done')
 
 
 end
