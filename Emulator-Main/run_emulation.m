@@ -1,29 +1,12 @@
 % Run-Emulator
 % this code takes in optically-classified imagery, identifies the latitude,
 % and draws from a distribution of potential satellite angles.
-
-clear
-close all
-
-% Set these personally
-Data_folder = '/Users/chorvat/Code/IS2-Emulator/Data/';
-Code_folder = '/Users/chorvat/Code/IS2-Emulator';
-Scripts_folder = '/Users/chorvat/Code/IS2-Emulator/Scripts';
-
-addpath(Data_folder)
-addpath(Code_folder);
-addpath(Scripts_folder)
-addpath([Code_folder '/Orbital-Incidence']);
-
-load('Image_Metadata.mat');
-load('Orientation_Histograms.mat')
-
 n_crossings = 50;
 n_images = length(image_location);
 
 % Initialize data
 
-try load([Code_folder '/Emulator_Data'])
+try load([Emulator_folder '/Emulator_Data.mat'])
 
     disp('Loaded data')
     fprintf('Have done %d images out of %d \n',sum(image_done),length(image_done));

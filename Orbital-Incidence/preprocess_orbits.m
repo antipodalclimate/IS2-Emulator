@@ -1,17 +1,14 @@
 % This code examines the angle of incidence of IS2 RGTs
+savestr = [Orbit_folder '/Orientation_Histograms']; 
 
-% Set these personally
-Data_folder = '/Users/chorvat/Code/IS2-Emulator/Data/Orbit-Data/';
-Plot_folder = '/Users/chorvat/Dropbox (Brown)/Research Projects/Plot-Tools';
-
-addpath(Plot_folder)
-addpath(Data_folder)
+disp('Creating Histograms of Azimuthal angles from IS2 KMLs')
+fprintf('Output saved at %s.mat \n',savestr)
 
 %% Load in all orbit RGTs
 
 earthellipsoid = referenceSphere('earth','km');
 
-orbit_struct = kmz2struct([Data_folder 'Arctic_repeat1_GT7.kmz']);
+orbit_struct = kmz2struct([Orbit_folder 'Arctic_repeat1_GT7.kmz']);
 
 %%
 orientations = cell(1);
@@ -69,42 +66,7 @@ for i = 1:length(lat_disc)
 
 end
 
-
-%% Make a supporting figure
-
-subplot(211)
-pcolor(orient_disc,lat_disc,orientation_hist);
-shading flat; 
-
-ylabel('Latitude');
-xlabel('Azimuth')
-title('Azimuth pdf by latitude','fontname','helvetica','fontsize',12)
-colormap(cmocean('thermal'))
-clim([0 1])
-grid on; box on; 
-set(gca,'fontname','helvetica','fontsize',9,'xminortick','on','yminortick','on')
-
-subplot(212)
-
-plot(orient_disc,orientation_hist(lat_disc == 70,:),'linewidth',1,'color','k')
-hold on
-plot(orient_disc,orientation_hist(lat_disc == 80,:),'linewidth',1,'color','b')
-plot(orient_disc,orientation_hist(lat_disc == 87,:),'linewidth',1,'color','r')
-hold off
-xlabel('Azimuth');
-ylabel('PDF');
-grid on; box on; 
-set(gca,'fontname','helvetica','fontsize',9,'xminortick','on','yminortick','on')
-
-legend('70N','80N','87N','Location','best')
-
-pos = [6.5 3.5]; 
-set(gcf,'windowstyle','normal','position',[0 0 pos],'paperposition',[0 0 pos],'papersize',pos,'units','inches','paperunits','inches');
-set(gcf,'windowstyle','normal','position',[0 0 pos],'paperposition',[0 0 pos],'papersize',pos,'units','inches','paperunits','inches');
-
-print('/Users/chorvat/Dropbox (Brown)/Apps/Overleaf/IS2-Concentration-Part-2/Figures/SI-azimuth.pdf','-dpdf','-r1200');
-
 %% Save this for use with the emulator
 
-save('Orientation_Histograms','orientation_hist','orient_disc','lat_disc')
+save(savestr,'orientation_hist','orient_disc','lat_disc')
 
