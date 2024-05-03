@@ -1,4 +1,4 @@
-function plot_single_image(Figure_folder,image_location,image_done,true_SIC,length_ice_measured,length_measured,sample_orients)
+function plot_single_image(Figure_folder,image_location,image_done,true_SIC,length_ice_measured,length_measured,sample_orients,sample_points)
 % PLOT_SINGLE_IMAGE - figure of the emulator method applied to a random
 % image along with computation of LIF
 %
@@ -12,6 +12,7 @@ function plot_single_image(Figure_folder,image_location,image_done,true_SIC,leng
 %    length_ice_measured - Measurements of ice length
 %    length_measured - Measurements of total length
 %    sample_orients - Azimuthal orientation
+%    sample_points - tie points within image of the drawn SRGTs
 % Outputs:
 %    Outputs: image_ind - index of the image plotted
 %             emulator-example.pdf saved in Figure_folder.
@@ -32,13 +33,11 @@ set(gcf, 'WindowStyle', 'normal', ...
 
 % These are the images we will consider. For just visual purposes we want
 % significant SIC - though this won't represent all imagery. 
-usable = find(image_done == 1 & true_SIC > .6);
+usable = find(image_done == 1 & true_SIC > .6 & true_SIC < .98);
 
 % Take one of thsoe images.
 usable_image_ind = randi(length(usable),1); 
 image_ind = usable(usable_image_ind); 
-
-image_ind = 9374; 
 
 fprintf('Using image %d',image_ind);
 
@@ -46,7 +45,7 @@ im_length = length_measured(image_ind,:);
 im_ice_length = length_ice_measured(image_ind,:);
 im_true_SIC = true_SIC(image_ind); 
 im_orients = sample_orients(image_ind,:);
-
+im_sample_points = sample_points(image_ind,:);
 
 n_crossings = size(im_length,2);
 n_perms = n_crossings;
@@ -72,7 +71,6 @@ SIC = true_SIC(image_ind);
 LIF0 = im_ice_length./im_length; 
 LIFN = cumsum(im_ice_length)./cumsum(im_length); 
 
-[~,worst_track] = max(abs(LIF0-SIC));
 %% First plot is of the image itself
 
 surface_class = (h5read(image_location{image_ind},'/classification'));
@@ -113,9 +111,8 @@ Xmeas = Xgrid(measurable);
 Ymeas = Ygrid(measurable);
 
 % Take a random set of X/Y points that are in the domain as tie points
-sample_points = randi(numel(Xmeas),[n_crossings 1]);
-sample_x = Xmeas(sample_points)';
-sample_y = Ymeas(sample_points)';
+sample_x = Xmeas(im_sample_points)';
+sample_y = Ymeas(im_sample_points)';
 
 % Longer than the image size. We just want to create the endpoints of
 % our "IS2" track intersecting the image
@@ -196,7 +193,7 @@ title('LIF estimates','interpreter','latex')
 % Plot bias as a function of crossing
 set(gca,'xticklabel','')
 
-leg = legend('Cumulative LIF','single-pass LIF','SIC','location','best')
+leg = legend('Cumulative LIF','single-pass LIF','SIC','location','best');
 leg.ItemTokenSize = [5,5];
 
 Ax{4} = subplot('position',[.6 .1 .35 .2167]);
@@ -225,8 +222,8 @@ for i = 1:length(Ax)
 
 end
 
-[worst_amt,worst_track] = max(100*max(abs(SIC-LIF0)));
-[cum_worst_amt,cum_worst_track] = max(100*max(abs(SIC-LIFN)));
+[worst_amt,worst_track] = max(100*(abs(SIC-LIF0)));
+[cum_worst_amt,cum_worst_track] = max(100*(abs(SIC-LIFN)));
 
 fprintf('True SIC is %2.2f percent \n',100*(SIC))
 fprintf('Long-term bias is %2.2f percent \n',100*(LIFN(end)-SIC))

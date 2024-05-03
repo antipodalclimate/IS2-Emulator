@@ -68,14 +68,12 @@ im_bias_std = squeeze(std(abs(im_bias),[],1));
 im_mean_LIF = squeeze(mean(im_meas_SIC,1));
 im_name = h5readatt(image_location{image_ind},'/','source_image');
 
+SIC = true_SIC(image_ind);
+LIF0 = im_ice_length./im_length; 
+LIFN = cumsum(im_ice_length)./cumsum(im_length); 
+
+[~,worst_track] = max(abs(LIF0-SIC));
 %% First plot is of the image itself
-
-
-
-
-
-
-
 
 surface_class = (h5read(image_location{image_ind},'/classification'));
 % Gridding things
@@ -142,7 +140,10 @@ yinit = sample_y - L*sin(elevation_angle);
 for j = 1:n_crossings
 
     scatter(sample_x(j),sample_y(j),50,'filled','MarkerFaceColor',[.8 .4 .4])
+   
+ 
     plot([xinit(j) xend(j)],[yinit(j) yend(j)],'k');
+
 %    drawnow
                   
 end
@@ -156,7 +157,9 @@ plot(1:n_crossings,im_ice_length,'Color',[.4 .4 .4]);
 grid on; box on; 
 ylabel('Length (m)'); 
 xlim([1 50])
-legend('Image Length','Ice Length','location','best');
+leg = legend('Image Length','Ice Length','location','best');
+leg.ItemTokenSize = [5,5];
+
 title('SRGT measured lengths','interpreter','latex')
 set(gca,'xticklabel','')
 
@@ -193,7 +196,8 @@ title('LIF estimates','interpreter','latex')
 % Plot bias as a function of crossing
 set(gca,'xticklabel','')
 
-legend('Cumulative LIF','single-pass LIF','SIC','location','best')
+leg = legend('Cumulative LIF','single-pass LIF','SIC','location','best')
+leg.ItemTokenSize = [5,5];
 
 Ax{4} = subplot('position',[.6 .1 .35 .2167]);
 
@@ -204,7 +208,8 @@ hold off
 xlim([1 50])
 xlabel('Crossing No.')
 title('SRGT and LIF Bias','interpreter','latex')
-legend('Mean LIF_n bias','\pm \sigma','location','best');
+leg =legend('Mean LIF_n bias','\pm \sigma','location','best');
+leg.ItemTokenSize = [5,5];
 grid on; box on; 
 
 letter = {'(a)','(b)','(c)','(d)','(e)','(f)','(g)','(e)','(c)'};
@@ -220,13 +225,15 @@ for i = 1:length(Ax)
 
 end
 
-SIC = true_SIC(image_ind);
-LIF0 = im_ice_length./im_length; 
-LIFN = cumsum(im_ice_length)./cumsum(im_length); 
+[worst_amt,worst_track] = max(100*(abs(SIC-LIF0)));
+[cum_worst_amt,cum_worst_track] = max(100*max(abs(SIC-LIFN)));
 
-fprintf('Long-term bias is $')
-fprintf('Max LIF_0 difference is %2.2f percent \n',100*max(abs(SIC-LIF0)))
-fprintf('Max LIF_N difference is %2.2f percent \n',100*max(abs(SIC-LIFN)))
+fprintf('True SIC is %2.2f percent \n',100*(SIC))
+fprintf('Long-term bias is %2.2f percent \n',100*(LIFN(end)-SIC))
+fprintf('Max LIF_0 difference is %2.2f percent for track %d \n',worst_amt,worst_track)
+fprintf('That RGT has LIF_0 = %2.2f \n',100*LIF0(worst_track))
+
+fprintf('Max LIF_N difference is %2.2f percent for track %d \n',cum_worst_amt,cum_worst_track)
 
 
 
