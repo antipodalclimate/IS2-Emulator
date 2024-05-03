@@ -10,6 +10,7 @@ Orbit_folder = [Code_folder '/Orbital-Incidence'];
 Metadata_folder = [Code_folder '/Locations-of-Scenes'];
 Emulator_folder = [Code_folder '/Emulator-Main'];
 Plotting_folder = [Code_folder '/Plotting']; 
+Script_folder = [Code_folder '/Scripts']; 
 Figure_folder = '/Users/chorvat/Dropbox (Brown)/Apps/Overleaf/IS2-Concentration-Part-2/Figures';
 
 %% Load or create orbital data
@@ -84,7 +85,8 @@ load([Emulator_folder '/Emulator_Data.mat']);
 load([Metadata_folder '/Image_Metadata.mat']);
 
 % Now do some plotting
-addpath('Plotting');
+addpath(Plotting_folder);
+addpath(Script_folder)
 
 % Orbital orientation figure
 plot_orbital_data(Figure_folder,orientation_hist,lat_disc,orient_disc);

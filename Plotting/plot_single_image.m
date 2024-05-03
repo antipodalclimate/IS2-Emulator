@@ -167,6 +167,7 @@ plot(1:n_crossings,im_ice_length,'Color',[.4 .4 .4]);
 grid on; box on; 
 ylabel('Length (m)'); 
 xlim([1 50])
+ylim([0 nx+ny])
 leg = legend('Image Length','Ice Length','location','best');
 leg.ItemTokenSize = [5,5];
 
@@ -190,6 +191,11 @@ drawnow
 
 hold on
 ylimmer = get(gca,'ylim');
+if ylimmer(2) - ylimmer(1) < 0.2
+     ylimmer = im_true_SIC + [-0.15 0.15]; 
+     ylimmer(2) = min(ylimmer(2),1);
+     ylimmer(1) = max(ylimmer(1),0);
+end
 
 scatter(1:n_crossings,im_ice_length./im_length,10,'filled','markerfacecolor',[.8 .2 .2],'markeredgecolor','none'); 
 yline(true_SIC(image_ind),'color',[.2 .2 .8],'linewidth',1)
@@ -206,7 +212,7 @@ title('LIF estimates','interpreter','latex')
 % Plot bias as a function of crossing
 set(gca,'xticklabel','')
 
-leg = legend('Cumulative LIF','single-pass LIF','SIC','location','best');
+leg = legend('LIF_n','LIF_0','SIC','location','best');
 leg.ItemTokenSize = [5,5];
 
 Ax{4} = subplot('position',[.6 .1 .35 .2167]);
