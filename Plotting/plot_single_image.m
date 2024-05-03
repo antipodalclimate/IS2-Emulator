@@ -13,7 +13,8 @@ function plot_single_image(Figure_folder,image_location,image_done,true_SIC,leng
 %    length_measured - Measurements of total length
 %    sample_orients - Azimuthal orientation
 % Outputs:
-%    Outputs: emulator-example.pdf saved in Figure_folder.
+%    Outputs: image_ind - index of the image plotted
+%             emulator-example.pdf saved in Figure_folder.
 %     
 % Author: Christopher Horvat
 % Date: 02-May-2024
@@ -25,7 +26,7 @@ clf
 set(gcf, 'WindowStyle', 'normal', ...
     'Units', 'inches', ...
     'PaperUnits', 'inches', ...
-    'Position', [0, 0, 6.5, 3.5], ...
+    'Position', [0, 0, 6.5, 4.5], ...
     'PaperPosition', [0, 0, 6.5, 3.5], ...
     'PaperSize', [6.5, 3.5]);
 
@@ -37,6 +38,9 @@ usable = find(image_done == 1 & true_SIC > .6);
 usable_image_ind = randi(length(usable),1); 
 image_ind = usable(usable_image_ind); 
 
+image_ind = 9374; 
+
+fprintf('Using image %d',image_ind);
 
 im_length = length_measured(image_ind,:); 
 im_ice_length = length_ice_measured(image_ind,:);
@@ -64,14 +68,12 @@ im_bias_std = squeeze(std(abs(im_bias),[],1));
 im_mean_LIF = squeeze(mean(im_meas_SIC,1));
 im_name = h5readatt(image_location{image_ind},'/','source_image');
 
+SIC = true_SIC(image_ind);
+LIF0 = im_ice_length./im_length; 
+LIFN = cumsum(im_ice_length)./cumsum(im_length); 
+
+[~,worst_track] = max(abs(LIF0-SIC));
 %% First plot is of the image itself
-
-
-
-
-
-
-
 
 surface_class = (h5read(image_location{image_ind},'/classification'));
 % Gridding things
@@ -138,45 +140,77 @@ yinit = sample_y - L*sin(elevation_angle);
 for j = 1:n_crossings
 
     scatter(sample_x(j),sample_y(j),50,'filled','MarkerFaceColor',[.8 .4 .4])
+   
+ 
     plot([xinit(j) xend(j)],[yinit(j) yend(j)],'k');
-    drawnow
+
+%    drawnow
                   
 end
 
 title(im_name,'interpreter','latex');
 
-Ax{2} = subplot('position',[.6 .575 .35 .35]);
+Ax{2} = subplot('position',[.6 .6834 .35 .2167]);
 plot(1:n_crossings,im_length,'Color',[.4 .4 .8]);
 hold on
 plot(1:n_crossings,im_ice_length,'Color',[.4 .4 .4]);
 grid on; box on; 
 ylabel('Length (m)'); 
 xlim([1 50])
-xlabel('Crossing No.')
-legend('Image Length','Ice Length','location','best');
+leg = legend('Image Length','Ice Length','location','best');
+leg.ItemTokenSize = [5,5];
 
-Ax{3} = subplot('position',[.6 .1 .35 .35]);
+title('SRGT measured lengths','interpreter','latex')
+set(gca,'xticklabel','')
+
+Ax{3} = subplot('position',[.6 .3917 .35 .2167]);
 
 
 plot(1:n_crossings,cumsum(im_ice_length)./cumsum(im_length),'Color','k','linewidth',2);
-yline(true_SIC(image_ind),'r')
 hold on
-
+drawnow
 
 
 % Take average SIC for each permutation as a function of crossing number
 % Want to see how they converge, so plot against the mean
 
-plot(1:n_crossings,im_mean_LIF + im_bias_std,'--k','linewidth',1); 
-plot(1:n_crossings,im_mean_LIF - im_bias_std,'--k','linewidth',1); 
+% plot(1:n_crossings,,'--k','linewidth',1); 
+% plot(1:n_crossings,im_mean_LIF - im_bias_std,'--k','linewidth',1); 
+% 
+
+hold on
+ylimmer = get(gca,'ylim');
+
+scatter(1:n_crossings,im_ice_length./im_length,10,'filled','markerfacecolor',[.8 .2 .2],'markeredgecolor','none'); 
+yline(true_SIC(image_ind),'color',[.2 .2 .8],'linewidth',1)
+
+% jbfill(1:n_crossings,im_mean_LIF + im_bias_std,im_mean_LIF - im_bias_std,[.4 .4 .4],[0 0 0]);
+
 grid on; box on; 
+
+
+ylim(ylimmer);
+xlim([1 50])
+ylabel('%');
+title('LIF estimates','interpreter','latex')
+% Plot bias as a function of crossing
+set(gca,'xticklabel','')
+
+leg = legend('Cumulative LIF','single-pass LIF','SIC','location','best')
+leg.ItemTokenSize = [5,5];
+
+Ax{4} = subplot('position',[.6 .1 .35 .2167]);
+
+plot(1:n_crossings,mean(im_bias,1),'color','k')
+hold on
+jbfill(1:n_crossings,mean(im_bias,1) + im_bias_std,mean(im_bias,1) - im_bias_std,[.4 .4 .4],[0 0 0]);
+hold off
 xlim([1 50])
 xlabel('Crossing No.')
-ylabel('%');
-
-% Plot bias as a function of crossing
-
-
+title('SRGT and LIF Bias','interpreter','latex')
+leg =legend('Mean LIF_n bias','\pm \sigma','location','best');
+leg.ItemTokenSize = [5,5];
+grid on; box on; 
 
 letter = {'(a)','(b)','(c)','(d)','(e)','(f)','(g)','(e)','(c)'};
 for i = 1:length(Ax)
@@ -190,6 +224,19 @@ for i = 1:length(Ax)
         'FontSize',8,'Tag','legtag');
 
 end
+
+[worst_amt,worst_track] = max(100*max(abs(SIC-LIF0)));
+[cum_worst_amt,cum_worst_track] = max(100*max(abs(SIC-LIFN)));
+
+fprintf('True SIC is %2.2f percent \n',100*(SIC))
+fprintf('Long-term bias is %2.2f percent \n',100*(LIFN(end)-SIC))
+fprintf('Max LIF_0 difference is %2.2f percent for track %d \n',worst_amt,worst_track)
+fprintf('That RGT has LIF_0 = %2.2f \n',100*LIF0(worst_track))
+
+fprintf('Max LIF_N difference is %2.2f percent for track %d \n',cum_worst_amt,cum_worst_track)
+
+
+
 
 pos = [6.5 4];
 set(gcf,'windowstyle','normal','position',[0 0 pos],'paperposition',[0 0 pos],'papersize',pos,'units','inches','paperunits','inches');

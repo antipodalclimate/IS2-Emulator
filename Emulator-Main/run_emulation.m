@@ -15,7 +15,7 @@ try load([Emulator_folder '/Emulator_Data.mat'])
 catch errload
 
     disp('No data yet')
-    [length_measured,sample_orients,length_ice_measured] = deal(nan(n_images,n_crossings));
+    [length_measured,sample_orients,length_ice_measured,sample_x,sample_y] = deal(nan(n_images,n_crossings));
     [true_SIC,true_OW] = deal(nan(n_images,1));
     image_done = zeros(n_images,1);
 
@@ -45,6 +45,7 @@ for block_ind = 1:nblocks
     TEMP_length_measured = length_measured(blockids,:);
     TEMP_length_ice_measured = length_ice_measured(blockids,:);
     TEMP_sample_orients = sample_orients(blockids,:);
+    TEMP_sample_x = sample_x(blockids,:); 
 
     % Parallelize the sub-blocks
 
@@ -55,7 +56,7 @@ for block_ind = 1:nblocks
         disp('------------------------------');
 
 
-        for block_subind = 1:length(blockids)
+        parfor block_subind = 1:length(blockids)
 
             % Index of the image itself in the overall dataset, not just
             % the sub block. 
@@ -127,8 +128,8 @@ for block_ind = 1:nblocks
                     % Only allow x/y samples that are actually measured. This may have a
                     % slight bias in the tie points if there are more X than Y points - not
                     % 100% sure. It might not.
-                    sample_x = Xmeas(sample_points)';
-                    sample_y = Ymeas(sample_points)';
+                    TEMP_sample_x = Xmeas(sample_points)';
+                    TEMP_sample_y = Ymeas(sample_points)';
 
                     % Longer than the image size. We just want to create the endpoints of
                     % our "IS2" track intersecting the image
@@ -143,12 +144,12 @@ for block_ind = 1:nblocks
 
                     elevation_angle = pi/2 - pi*TEMP_sample_orients(block_subind,:)/180;
 
-                    xend = sample_x + L*cos(elevation_angle);
-                    xinit = sample_x - L*cos(elevation_angle);
+                    xend = TEMP_sample_x + L*cos(elevation_angle);
+                    xinit = TEMP_sample_x - L*cos(elevation_angle);
 
                     % Same for y points
-                    yend = sample_y + L*sin(elevation_angle);
-                    yinit = sample_y - L*sin(elevation_angle);
+                    yend = TEMP_sample_y + L*sin(elevation_angle);
+                    yinit = TEMP_sample_y - L*sin(elevation_angle);
 
 
                     %% Initially crossing the image, display things
@@ -224,7 +225,9 @@ for block_ind = 1:nblocks
         length_ice_measured(blockids,:) = TEMP_length_ice_measured;
         true_SIC(blockids) = TEMP_true_SIC;
         sample_orients(blockids,:) = TEMP_sample_orients;
-        save(savestr,'image_location','length_measured','length_ice_measured','image_done','sample_orients','true_SIC','image_done')
+        sample_x(blockids,:) = TEMP_sample_x; 
+        sample_y(blockids,:) = TEMP_sample_y; 
+        save(savestr,'image_location','length_measured','length_ice_measured','image_done','sample_orients','sample_x','sample_y','true_SIC','image_done')
 
     end % if we have any undone images
 

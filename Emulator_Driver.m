@@ -91,4 +91,7 @@ plot_orbital_data(Figure_folder,orientation_hist,lat_disc,orient_disc);
 
 %%
 % Figure of emulation on a single random image
-plot_single_image(Figure_folder,image_location,image_done,true_SIC,length_ice_measured,length_measured,sample_orients)
+plot_single_image(Figure_folder,image_location,image_done,true_SIC,length_ice_measured,length_measured,sample_orients);
+
+% 
+plot_bias_data; 
