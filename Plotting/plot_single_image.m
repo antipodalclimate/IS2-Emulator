@@ -24,6 +24,9 @@ function plot_single_image(Figure_folder,image_location,image_done,true_SIC,leng
 figure(1)
 clf
 
+disp('------------------------')
+disp('Single image plot')
+
 set(gcf, 'WindowStyle', 'normal', ...
     'Units', 'inches', ...
     'PaperUnits', 'inches', ...
@@ -38,8 +41,10 @@ usable = find(image_done == 1 & true_SIC > .6 & true_SIC < .98);
 % Take one of thsoe images.
 usable_image_ind = randi(length(usable),1); 
 image_ind = usable(usable_image_ind); 
+image_ind = 157; % fix for now while we do emulation
+% image_ind = 9374; % one of my favs
 
-fprintf('Using image %d',image_ind);
+fprintf('Using image %d \n',image_ind);
 
 im_length = length_measured(image_ind,:); 
 im_ice_length = length_ice_measured(image_ind,:);
@@ -70,6 +75,8 @@ im_name = h5readatt(image_location{image_ind},'/','source_image');
 SIC = true_SIC(image_ind);
 LIF0 = im_ice_length./im_length; 
 LIFN = cumsum(im_ice_length)./cumsum(im_length); 
+[worst_amt,worst_track] = max(100*(abs(SIC-LIF0)));
+[cum_worst_amt,cum_worst_track] = max(100*(abs(SIC-LIFN)));
 
 %% First plot is of the image itself
 
@@ -138,14 +145,20 @@ for j = 1:n_crossings
 
     scatter(sample_x(j),sample_y(j),50,'filled','MarkerFaceColor',[.8 .4 .4])
    
+    if j~= worst_track
  
-    plot([xinit(j) xend(j)],[yinit(j) yend(j)],'k');
+    plot([xinit(j) xend(j)],[yinit(j) yend(j)],'color',[.2 .2 .2],'linewidth',0.25);
 
+    else
+
+            plot([xinit(j) xend(j)],[yinit(j) yend(j)],'r','linewidth',1);
+
+    end
 %    drawnow
                   
 end
 
-title(im_name,'interpreter','latex');
+title(strrep(im_name,'_','\_'),'interpreter','latex');
 
 Ax{2} = subplot('position',[.6 .6834 .35 .2167]);
 plot(1:n_crossings,im_length,'Color',[.4 .4 .8]);
@@ -222,14 +235,12 @@ for i = 1:length(Ax)
 
 end
 
-[worst_amt,worst_track] = max(100*(abs(SIC-LIF0)));
-[cum_worst_amt,cum_worst_track] = max(100*(abs(SIC-LIFN)));
+
 
 fprintf('True SIC is %2.2f percent \n',100*(SIC))
 fprintf('Long-term bias is %2.2f percent \n',100*(LIFN(end)-SIC))
 fprintf('Max LIF_0 difference is %2.2f percent for track %d \n',worst_amt,worst_track)
 fprintf('That RGT has LIF_0 = %2.2f \n',100*LIF0(worst_track))
-
 fprintf('Max LIF_N difference is %2.2f percent for track %d \n',cum_worst_amt,cum_worst_track)
 
 
