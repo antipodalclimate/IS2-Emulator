@@ -223,6 +223,8 @@ jbfill(1:n_crossings,mean(im_bias,1) + im_bias_std,mean(im_bias,1) - im_bias_std
 hold off
 xlim([1 50])
 xlabel('Crossing No.')
+yline(0,'-r');
+
 title('SRGT and LIF Bias','interpreter','latex')
 leg =legend('Mean LIF_n bias','\pm \sigma','location','best');
 leg.ItemTokenSize = [5,5];
