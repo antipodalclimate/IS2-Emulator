@@ -1,7 +1,7 @@
 % Run-Emulator
 % this code takes in optically-classified imagery, identifies the latitude,
 % and draws from a distribution of potential satellite angles.
-n_crossings = 50;
+n_crossings = 100;
 n_images = length(image_location);
 
 savestr = [Code_folder '/Emulator-Main/Emulator_Data']; 
