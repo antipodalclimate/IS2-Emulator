@@ -3,7 +3,7 @@
 % permutations of those crossings
 n_images = size(length_measured,1);
 n_crossings = size(length_measured,2);
-n_perms = n_crossings;
+n_perms = 5*n_crossings;
 
 % Measured SIC when accumulating crossings
 im_meas_SIC = nan(n_images,n_crossings,n_perms);
@@ -63,48 +63,48 @@ figure(1)
 clf
 
 
-subplot(221)
+subplot(311)
 % Plot the mean over all images and permutations as a function of crossing
 % number
 plot(1:n_crossings,Bias_bar_angle,'k','linewidth',1); 
 hold on
 jbfill(1:n_crossings,Bias_bar_angle + Bias_std_all,Bias_bar_angle - Bias_std_all,[.4 .4 .4],[0 0 0],1,0.25); 
-jbfill(1:n_crossings,Bias_bar_angle + Bias_std_angle,Bias_bar_angle - Bias_std_angle,[.4 .4 .4],[0 0 0],1,0.25); 
+jbfill(1:n_crossings,Bias_bar_angle + Bias_std_angle,Bias_bar_angle - Bias_std_angle,[.4 .4 .8],[0 0 0],1,0.25); 
 grid on; box on; 
 xlim([1 n_crossings])
-title('Mean Biases and Confidence Intervals')
+title('Mean Biases and Confidence Intervals','interpreter','latex')
 
-subplot(223)
+subplot(312)
 % Now looking at absolute biases
-plot(1:n_crossings,Bias_abs_bar_angle,'r','linewidth',1); 
+plot(1:n_crossings,Bias_abs_bar_angle,'k','linewidth',1); 
 hold on
 
-jbfill(1:n_crossings,Bias_abs_595_all(1,:),Bias_abs_595_all(2,:),[.8 .4 .4],[0 0 0],1,0.25); 
+jbfill(1:n_crossings,Bias_abs_595_all(1,:),Bias_abs_595_all(2,:),[.4 .4 .4],[0 0 0],1,0.25); 
 hold on
-plot(1:n_crossings,Bias_abs_barfirst_angle,'g','linewidth',1); 
-jbfill(1:n_crossings,Bias_abs_595_barfirst(1,:),Bias_abs_595_barfirst(2,:),[.4 .8 .4],[0 0 0],1,0.25); 
+plot(1:n_crossings,Bias_abs_barfirst_angle,'b','linewidth',1); 
+jbfill(1:n_crossings,Bias_abs_595_barfirst(1,:),Bias_abs_595_barfirst(2,:),[.4 .4 .8],[0 0 0],1,0.25); 
 grid on; box on; 
 xlim([1 n_crossings])
 
 
-title('Absolute Biases and Confidence Intervals')
+title('Absolute Biases and Confidence Intervals','interpreter','latex')
 
 %%
 % plot(1:n_crossings,SIC_bias_std);
-subplot(222)
-histogram(100*SIC_bias(:,1,:),-50:1:50)
-hold on
-histogram(100*SIC_bias(:,5,:),-50:1:50)
-histogram(100*SIC_bias(:,10,:),-50:1:50)
-grid on; box on; 
-xlim([-20 20])
-xline([-2.5 2.5],'linewidth',2)
-legend('Crossing 0','Crossing 5','Crossing 10');
+% subplot(222)
+% histogram(100*SIC_bias(:,1,:),-50:1:50)
+% hold on
+% histogram(100*SIC_bias(:,5,:),-50:1:50)
+% histogram(100*SIC_bias(:,10,:),-50:1:50)
+% grid on; box on; 
+% xlim([-20 20])
+% xline([-2.5 2.5],'linewidth',2)
+% legend('Crossing 0','Crossing 5','Crossing 10');
 
 %% 
-subplot(224)
-r = sum(abs(SIC_bias) < 0.025,[1 3]) / numel(SIC_bias(:,1,:));
-s = sum(abs(SIC_bias) < 0.05,[1 3]) / numel(SIC_bias(:,1,:));
+subplot(313)
+r = 100*sum(abs(SIC_bias) < 0.025,[1 3]) / numel(SIC_bias(:,1,:));
+s = 100*sum(abs(SIC_bias) < 0.05,[1 3]) / numel(SIC_bias(:,1,:));
 
 plot(1:n_crossings,r,'k')
 hold on; 
@@ -112,3 +112,25 @@ hold on;
 plot(1:n_crossings,s,'r')
 grid on; box on; 
 xlim([1 n_crossings]); 
+ylim([0 100])
+legend('Bias < 2.5\%','Bias < 5\%')
+
+allAxesInFigure = findall(gcf,'type','axes');
+letter = {'(a)','(b)','(c)','(d)','(e)','(f)','(g)','(e)','(c)'};
+
+for i = 1:length(allAxesInFigure)
+    
+ posy = get(allAxesInFigure(i),'position');
+
+    set(allAxesInFigure(i),'fontname','times','fontsize',8,'xminortick','on','yminortick','on')
+    
+    annotation('textbox',[posy(1) - .025 posy(2)+posy(4) + .035 .025 .025], ...
+        'String',letter{i},'LineStyle','none','FontName','Helvetica', ...
+        'FontSize',8,'Tag','legtag');
+
+end
+
+pos = [6.5 4];
+set(gcf,'windowstyle','normal','position',[0 0 pos],'paperposition',[0 0 pos],'papersize',pos,'units','inches','paperunits','inches');
+set(gcf,'windowstyle','normal','position',[0 0 pos],'paperposition',[0 0 pos],'papersize',pos,'units','inches','paperunits','inches');
+print([Figure_folder '/bias-figure.pdf'],'-dpdf','-r1200');
