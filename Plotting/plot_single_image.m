@@ -41,7 +41,7 @@ usable = find(image_done == 1 & true_SIC > .6 & true_SIC < .9);
 % Take one of thsoe images.
 usable_image_ind = randi(length(usable),1); 
 image_ind = usable(usable_image_ind); 
-image_ind = 9451; % fix for now while we do emulation
+% image_ind = 9451; % fix for now while we do emulation
 % image_ind = 9374; % one of my favs
 
 fprintf('Using image %d \n',image_ind);
@@ -61,8 +61,8 @@ im_meas_SIC = nan(n_perms,perm_length);
 for j = 1:n_perms
 
     % randomly permute the number of crossings
-    rp = randperm(n_crossings,perm_length);
-    % rp = randi(n_crossings,[perm_length 1]); % % rp = randi(n_crossings,[n_crossings 1]); 
+    % rp = randperm(n_crossings,perm_length);
+    rp = randi(n_crossings,[perm_length 1]); % % rp = randi(n_crossings,[n_crossings 1]); 
     im_meas_SIC(j,:) = cumsum(im_ice_length(rp))./cumsum(im_length(rp));
 
 
@@ -258,6 +258,7 @@ end
 
 fprintf('True SIC is %2.2f percent \n',100*(SIC))
 fprintf('Long-term bias is %2.2f percent \n',100*(LIFN(end)-SIC))
+fprintf('Long-term standard deviation is %2.2f percent \n',100*im_bias_std(end))
 fprintf('Mean LIF_0 difference is %2.2f pm %2.2f percent \n',100*(mean(LIF0)-SIC),100*std(LIF0 - SIC));
 fprintf('Max LIF_0 difference is %2.2f percent for track %d \n',worst_amt,worst_track)
 fprintf('That RGT has LIF_0 = %2.2f \n',100*LIF0(worst_track))

@@ -11,7 +11,7 @@ Metadata_folder = [Code_folder '/Locations-of-Scenes'];
 Emulator_folder = [Code_folder '/Emulator-Main'];
 Plotting_folder = [Code_folder '/Plotting']; 
 Script_folder = [Code_folder '/Scripts']; 
-Figure_folder = '/Users/chorvat/Dropbox (Brown)/Apps/Overleaf/IS2-Concentration-Part-2/Figures';
+Figure_folder = '~/Library/CloudStorage/Dropbox-Brown/Apps/Overleaf/IS2-Concentration-Part-2/Figures';
 
 %% Load or create orbital data
 

@@ -1,12 +1,18 @@
 
+
+usable = true_SIC < .99 & true_SIC > 0.1 & ~isnan(true_SIC);
+
+
 % Number of images, sequential crossings, and therefore number of potential
 % permutations of those crossings
-n_images = size(length_measured,1);
+n_images = sum(usable);
 n_crossings = size(length_measured,2);
-n_perms = 5*n_crossings;
+perm_length = 50; 
+n_perms = 4*n_crossings;
+
 
 % Measured SIC when accumulating crossings
-im_meas_SIC = nan(n_images,n_crossings,n_perms);
+im_meas_SIC = nan(n_images,perm_length,n_perms);
 tot_length = im_meas_SIC; 
 
 % For each permutation, take the cumulative sum in each image of the random
@@ -14,27 +20,36 @@ tot_length = im_meas_SIC;
 for j = 1:n_perms
 
     % randomly permute the number of crossings
-    rp = randperm(n_crossings);
-
-    im_meas_SIC(:,:,j) = cumsum(length_ice_measured(:,rp),2)./cumsum(length_measured(:,rp),2);
-    tot_length(:,:,j) = cumsum(length_measured(:,rp),2);
+    rp = randi(n_crossings,[perm_length 1]);
+    im_meas_SIC(:,:,j) = cumsum(length_ice_measured(usable,rp),2)./cumsum(length_measured(usable,rp),2);
+    tot_length(:,:,j) = cumsum(length_measured(usable,rp),2);
 
 end
 
 
 %% Compute bias fields
 
-% Difference between actual SIC and the accumulated SIC
-SIC_bias = bsxfun(@minus,true_SIC,im_meas_SIC);
+% Difference between actual SIC and the accumulated SIC. 
+SIC_bias = bsxfun(@minus,true_SIC(usable),im_meas_SIC);
 
-% Take the mean bias as a function of crossing number, across all
-% permutations. 
+% Long-term LIF
+LIF_star = mean(im_meas_SIC(:,end,:),3);
+% Bias from true value
+Bias_i = true_SIC(usable) - LIF_star; 
+% Variability at end of crossings
+Std_i = 100*std(SIC_bias(:,end,:),[],3,'omitnan'); 
+
+% Take the mean bias as a function of crossing number.
 
 % Mean bias per crossing averaged over all permutations and images
-Bias_bar_angle = 100*squeeze(mean(mean(SIC_bias,3),1,"omitnan")); 
+Bias_n = 100*squeeze(mean(SIC_bias,[1 3],"omitnan")); 
 
 % Mean absolute bias per crossing, across all permutations and images
-Bias_abs_bar_angle = 100*squeeze(mean(mean(abs(SIC_bias),3),1,"omitnan")); 
+Bias_abs_n = 100*squeeze(mean(mean(abs(SIC_bias),3),1,"omitnan")); 
+
+Std_n = 100*squeeze(mean(std(SIC_bias,[],3,'omitnan'),1,'omitnan')); 
+
+%%
 
 % Mean absolute bias per crossing, when we average over all permutations
 % first, then take the absolute value and average across all images
@@ -62,29 +77,37 @@ Bias_abs_595_barfirst = 100*squeeze(prctile(abs(mean(SIC_bias,3)),100*[exp(-2) 1
 figure(1)
 clf
 
+subplot(321)
+histogram(Bias_i)
 
-subplot(311)
-% Plot the mean over all images and permutations as a function of crossing
-% number
-plot(1:n_crossings,Bias_bar_angle,'k','linewidth',1); 
-hold on
-jbfill(1:n_crossings,Bias_bar_angle + Bias_std_all,Bias_bar_angle - Bias_std_all,[.4 .4 .4],[0 0 0],1,0.25); 
-jbfill(1:n_crossings,Bias_bar_angle + Bias_std_angle,Bias_bar_angle - Bias_std_angle,[.4 .4 .8],[0 0 0],1,0.25); 
-grid on; box on; 
-xlim([1 n_crossings])
-title('Mean Biases and Confidence Intervals','interpreter','latex')
+subplot(322)
+histogram(Std_i); 
+
+%%
+
 
 subplot(312)
+% Plot the mean over all images and permutations as a function of crossing
+% number
+plot(1:perm_length,Bias_n,'k','linewidth',1); 
+hold on
+jbfill(1:perm_length,Bias_n + Std_n,Bias_n - Std_n,[.4 .4 .4],[0 0 0],1,0.25); 
+jbfill(1:perm_length,Bias_n + Bias_std_angle,Bias_n - Bias_std_angle,[.4 .4 .8],[0 0 0],1,0.25); 
+grid on; box on; 
+xlim([1 perm_length])
+title('Mean Biases and Confidence Intervals','interpreter','latex')
+
+subplot(313)
 % Now looking at absolute biases
-plot(1:n_crossings,Bias_abs_bar_angle,'k','linewidth',1); 
+plot(1:perm_length,Bias_abs_n,'k','linewidth',1); 
 hold on
 
-jbfill(1:n_crossings,Bias_abs_595_all(1,:),Bias_abs_595_all(2,:),[.4 .4 .4],[0 0 0],1,0.25); 
+jbfill(1:perm_length,Bias_abs_595_all(1,:),Bias_abs_595_all(2,:),[.4 .4 .4],[0 0 0],1,0.25); 
 hold on
-plot(1:n_crossings,Bias_abs_barfirst_angle,'b','linewidth',1); 
-jbfill(1:n_crossings,Bias_abs_595_barfirst(1,:),Bias_abs_595_barfirst(2,:),[.4 .4 .8],[0 0 0],1,0.25); 
+plot(1:perm_length,Bias_abs_barfirst_angle,'b','linewidth',1); 
+jbfill(1:perm_length,Bias_abs_595_barfirst(1,:),Bias_abs_595_barfirst(2,:),[.4 .4 .8],[0 0 0],1,0.25); 
 grid on; box on; 
-xlim([1 n_crossings])
+xlim([1 perm_length])
 
 
 title('Absolute Biases and Confidence Intervals','interpreter','latex')
