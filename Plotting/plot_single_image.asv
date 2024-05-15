@@ -1,4 +1,4 @@
-function plot_single_image(Figure_folder,image_location,image_done,true_SIC,length_ice_measured,length_measured,sample_orients)
+function plot_single_image(Figure_folder,image_location,image_done,true_SIC,length_ice_measured,length_measured,sample_orients,sample_points)
 % PLOT_SINGLE_IMAGE - figure of the emulator method applied to a random
 % image along with computation of LIF
 %
@@ -12,6 +12,7 @@ function plot_single_image(Figure_folder,image_location,image_done,true_SIC,leng
 %    length_ice_measured - Measurements of ice length
 %    length_measured - Measurements of total length
 %    sample_orients - Azimuthal orientation
+%    sample_points - tie points within image of the drawn SRGTs
 % Outputs:
 %    Outputs: image_ind - index of the image plotted
 %             emulator-example.pdf saved in Figure_folder.
@@ -23,6 +24,9 @@ function plot_single_image(Figure_folder,image_location,image_done,true_SIC,leng
 figure(1)
 clf
 
+disp('------------------------')
+disp('Single image plot')
+
 set(gcf, 'WindowStyle', 'normal', ...
     'Units', 'inches', ...
     'PaperUnits', 'inches', ...
@@ -32,21 +36,21 @@ set(gcf, 'WindowStyle', 'normal', ...
 
 % These are the images we will consider. For just visual purposes we want
 % significant SIC - though this won't represent all imagery. 
-usable = find(image_done == 1 & true_SIC > .6);
+usable = find(image_done == 1 & true_SIC > .6 & true_SIC < .9);
 
 % Take one of thsoe images.
 usable_image_ind = randi(length(usable),1); 
 image_ind = usable(usable_image_ind); 
+% image_ind = 157; % fix for now while we do emulation
+% image_ind = 9374; % one of my favs
 
-image_ind = 9374; 
-
-fprintf('Using image %d',image_ind);
+fprintf('Using image %d \n',image_ind);
 
 im_length = length_measured(image_ind,:); 
 im_ice_length = length_ice_measured(image_ind,:);
 im_true_SIC = true_SIC(image_ind); 
 im_orients = sample_orients(image_ind,:);
-
+im_sample_points = sample_points(image_ind,:);
 
 n_crossings = size(im_length,2);
 n_perms = n_crossings;
@@ -57,7 +61,7 @@ for j = 1:n_perms
 
     % randomly permute the number of crossings
     rp = randperm(n_crossings);
-
+    rp = randi(n_cro)
     im_meas_SIC(j,:) = cumsum(im_ice_length(rp))./cumsum(im_length(rp));
 
 
@@ -71,8 +75,9 @@ im_name = h5readatt(image_location{image_ind},'/','source_image');
 SIC = true_SIC(image_ind);
 LIF0 = im_ice_length./im_length; 
 LIFN = cumsum(im_ice_length)./cumsum(im_length); 
+[worst_amt,worst_track] = max(100*(abs(SIC-LIF0)));
+[cum_worst_amt,cum_worst_track] = max(100*(abs(SIC-LIFN)));
 
-[~,worst_track] = max(abs(LIF0-SIC));
 %% First plot is of the image itself
 
 surface_class = (h5read(image_location{image_ind},'/classification'));
@@ -113,9 +118,8 @@ Xmeas = Xgrid(measurable);
 Ymeas = Ygrid(measurable);
 
 % Take a random set of X/Y points that are in the domain as tie points
-sample_points = randi(numel(Xmeas),[n_crossings 1]);
-sample_x = Xmeas(sample_points)';
-sample_y = Ymeas(sample_points)';
+sample_x = Xmeas(im_sample_points)';
+sample_y = Ymeas(im_sample_points)';
 
 % Longer than the image size. We just want to create the endpoints of
 % our "IS2" track intersecting the image
@@ -141,14 +145,20 @@ for j = 1:n_crossings
 
     scatter(sample_x(j),sample_y(j),50,'filled','MarkerFaceColor',[.8 .4 .4])
    
+    if j~= worst_track
  
-    plot([xinit(j) xend(j)],[yinit(j) yend(j)],'k');
+    plot([xinit(j) xend(j)],[yinit(j) yend(j)],'color',[.2 .2 .2],'linewidth',0.25);
 
+    else
+
+            plot([xinit(j) xend(j)],[yinit(j) yend(j)],'r','linewidth',1);
+
+    end
 %    drawnow
                   
 end
 
-title(im_name,'interpreter','latex');
+title(strrep(im_name,'_','\_'),'interpreter','latex');
 
 Ax{2} = subplot('position',[.6 .6834 .35 .2167]);
 plot(1:n_crossings,im_length,'Color',[.4 .4 .8]);
@@ -157,6 +167,7 @@ plot(1:n_crossings,im_ice_length,'Color',[.4 .4 .4]);
 grid on; box on; 
 ylabel('Length (m)'); 
 xlim([1 50])
+ylim([0 nx+ny])
 leg = legend('Image Length','Ice Length','location','best');
 leg.ItemTokenSize = [5,5];
 
@@ -180,6 +191,11 @@ drawnow
 
 hold on
 ylimmer = get(gca,'ylim');
+if ylimmer(2) - ylimmer(1) < 0.2
+     ylimmer = im_true_SIC + [-0.15 0.15]; 
+     ylimmer(2) = min(ylimmer(2),1);
+     ylimmer(1) = max(ylimmer(1),0);
+end
 
 scatter(1:n_crossings,im_ice_length./im_length,10,'filled','markerfacecolor',[.8 .2 .2],'markeredgecolor','none'); 
 yline(true_SIC(image_ind),'color',[.2 .2 .8],'linewidth',1)
@@ -196,7 +212,7 @@ title('LIF estimates','interpreter','latex')
 % Plot bias as a function of crossing
 set(gca,'xticklabel','')
 
-leg = legend('Cumulative LIF','single-pass LIF','SIC','location','best')
+leg = legend('LIF_n','LIF_0','SIC','location','best');
 leg.ItemTokenSize = [5,5];
 
 Ax{4} = subplot('position',[.6 .1 .35 .2167]);
@@ -207,6 +223,8 @@ jbfill(1:n_crossings,mean(im_bias,1) + im_bias_std,mean(im_bias,1) - im_bias_std
 hold off
 xlim([1 50])
 xlabel('Crossing No.')
+yline(0,'-r');
+
 title('SRGT and LIF Bias','interpreter','latex')
 leg =legend('Mean LIF_n bias','\pm \sigma','location','best');
 leg.ItemTokenSize = [5,5];
@@ -225,14 +243,13 @@ for i = 1:length(Ax)
 
 end
 
-[worst_amt,worst_track] = max(100*(abs(SIC-LIF0)));
-[cum_worst_amt,cum_worst_track] = max(100*max(abs(SIC-LIFN)));
+
 
 fprintf('True SIC is %2.2f percent \n',100*(SIC))
 fprintf('Long-term bias is %2.2f percent \n',100*(LIFN(end)-SIC))
+fprintf('Mean LIF_0 difference is %2.2f pm %2.2f percent \n',100*(mean(LIF0)-SIC),100*std(LIF0 - SIC));
 fprintf('Max LIF_0 difference is %2.2f percent for track %d \n',worst_amt,worst_track)
 fprintf('That RGT has LIF_0 = %2.2f \n',100*LIF0(worst_track))
-
 fprintf('Max LIF_N difference is %2.2f percent for track %d \n',cum_worst_amt,cum_worst_track)
 
 

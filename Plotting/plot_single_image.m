@@ -36,12 +36,12 @@ set(gcf, 'WindowStyle', 'normal', ...
 
 % These are the images we will consider. For just visual purposes we want
 % significant SIC - though this won't represent all imagery. 
-usable = find(image_done == 1 & true_SIC > .6 & true_SIC < .98);
+usable = find(image_done == 1 & true_SIC > .6 & true_SIC < .9);
 
 % Take one of thsoe images.
 usable_image_ind = randi(length(usable),1); 
 image_ind = usable(usable_image_ind); 
-image_ind = 157; % fix for now while we do emulation
+image_ind = 9451; % fix for now while we do emulation
 % image_ind = 9374; % one of my favs
 
 fprintf('Using image %d \n',image_ind);
@@ -53,15 +53,16 @@ im_orients = sample_orients(image_ind,:);
 im_sample_points = sample_points(image_ind,:);
 
 n_crossings = size(im_length,2);
-n_perms = n_crossings;
+perm_length = 50; 
+n_perms = 4*n_crossings;
 
-im_meas_SIC = nan(n_perms,n_crossings);
+im_meas_SIC = nan(n_perms,perm_length);
 
 for j = 1:n_perms
 
     % randomly permute the number of crossings
-    rp = randperm(n_crossings);
-
+    rp = randperm(n_crossings,perm_length);
+    % rp = randi(n_crossings,[perm_length 1]); % % rp = randi(n_crossings,[n_crossings 1]); 
     im_meas_SIC(j,:) = cumsum(im_ice_length(rp))./cumsum(im_length(rp));
 
 
@@ -166,7 +167,7 @@ hold on
 plot(1:n_crossings,im_ice_length,'Color',[.4 .4 .4]);
 grid on; box on; 
 ylabel('Length (m)'); 
-xlim([1 50])
+xlim([1 perm_length])
 ylim([0 nx+ny])
 leg = legend('Image Length','Ice Length','location','best');
 leg.ItemTokenSize = [5,5];
@@ -206,7 +207,7 @@ grid on; box on;
 
 
 ylim(ylimmer);
-xlim([1 50])
+xlim([1 perm_length])
 ylabel('%');
 title('LIF estimates','interpreter','latex')
 % Plot bias as a function of crossing
@@ -217,16 +218,26 @@ leg.ItemTokenSize = [5,5];
 
 Ax{4} = subplot('position',[.6 .1 .35 .2167]);
 
-plot(1:n_crossings,mean(im_bias,1),'color','k')
+plot(1:perm_length,mean(im_bias,1),'color','k')
 hold on
-jbfill(1:n_crossings,mean(im_bias,1) + im_bias_std,mean(im_bias,1) - im_bias_std,[.4 .4 .4],[0 0 0]);
+jbfill(1:perm_length,mean(im_bias,1) + im_bias_std,mean(im_bias,1) - im_bias_std,[.4 .4 .4],[0 0 0]);
 hold off
-xlim([1 50])
+xlim([1 perm_length])
+
+ylimmer = get(gca,'ylim');
+if ylimmer(2) - ylimmer(1) < 0.1
+     ylimmer = mean(mean(im_bias,1)) + [-0.15 0.15]; 
+     ylimmer(2) = min(ylimmer(2),1);
+     ylimmer(1) = max(ylimmer(1),0);
+end
+
 xlabel('Crossing No.')
-yline(0,'-r');
+yline(im_true_SIC - LIFN(end),'-r');
+
+
 
 title('SRGT and LIF Bias','interpreter','latex')
-leg =legend('Mean LIF_n bias','\pm \sigma','location','best');
+leg =legend('Mean LIF_n bias','\pm \sigma','B_i','location','best');
 leg.ItemTokenSize = [5,5];
 grid on; box on; 
 
@@ -247,6 +258,7 @@ end
 
 fprintf('True SIC is %2.2f percent \n',100*(SIC))
 fprintf('Long-term bias is %2.2f percent \n',100*(LIFN(end)-SIC))
+fprintf('Mean LIF_0 difference is %2.2f pm %2.2f percent \n',100*(mean(LIF0)-SIC),100*std(LIF0 - SIC));
 fprintf('Max LIF_0 difference is %2.2f percent for track %d \n',worst_amt,worst_track)
 fprintf('That RGT has LIF_0 = %2.2f \n',100*LIF0(worst_track))
 fprintf('Max LIF_N difference is %2.2f percent for track %d \n',cum_worst_amt,cum_worst_track)
@@ -257,4 +269,9 @@ fprintf('Max LIF_N difference is %2.2f percent for track %d \n',cum_worst_amt,cu
 pos = [6.5 4];
 set(gcf,'windowstyle','normal','position',[0 0 pos],'paperposition',[0 0 pos],'papersize',pos,'units','inches','paperunits','inches');
 set(gcf,'windowstyle','normal','position',[0 0 pos],'paperposition',[0 0 pos],'papersize',pos,'units','inches','paperunits','inches');
-print([Figure_folder '/emulator-example.pdf'],'-dpdf','-r1200');
+
+try
+    print([Figure_folder '/emulator-example.pdf'],'-dpdf','-r1200');
+catch 
+    disp('Cant save');
+end
