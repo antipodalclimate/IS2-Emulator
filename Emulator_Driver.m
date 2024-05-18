@@ -1,19 +1,19 @@
 %% Overall code driver for instructions
+% Clear all variables and close all figures
 clear
 close all
 
-% First add the relevant data in a data directory (I use Data and symlink
-% to the imagery, metadata, and orientation within that)
-
-% Locations of various subfolders. Change if necessary.  
+% Define the folder paths relative to the current directory
 Code_folder = pwd;
-Data_folder = [Code_folder '/Data']; % Data is not included in the Github repo and so this should likely be edited on your local machine
+Data_folder = [Code_folder '/Data']; % Adjust based on your local setup
 Orbit_folder = [Code_folder '/Orbital-Incidence'];
 Metadata_folder = [Code_folder '/Locations-of-Scenes'];
 Emulator_folder = [Code_folder '/Emulator-Main'];
 Plotting_folder = [Code_folder '/Plotting']; 
-Figure_folder = '/Users/chorvat/Dropbox (Brown)/Apps/Overleaf/IS2-Concentration-Part-2/Figures';
-%%
+Script_folder = [Code_folder '/Scripts']; 
+Figure_folder = '~/Library/CloudStorage/Dropbox-Brown/Apps/Overleaf/IS2-Concentration-Part-2/Figures';
+
+%% Load or create orbital data
 
 % Second, preprocess two thngs
 
@@ -35,7 +35,7 @@ catch errload
 
 end
 
-%% Now the image metadata
+%% Load or create image metadata
 
 try load([Metadata_folder '/Image_Metadata.mat'])
 
@@ -53,7 +53,7 @@ catch errload
     
 end
 
-%% Now do the actual emulation
+%% Load LIF data and decide whether to run emulation
 
 try load([Emulator_folder '/Emulator_Data.mat'])
     
@@ -62,22 +62,22 @@ try load([Emulator_folder '/Emulator_Data.mat'])
     fprintf('%d out of %d images have LIF data \n',sum(image_done ~= 0),length(image_location));
     
     if sum(image_done ~= 0) < length(image_location)
-        throw(errload)
+        error('Incomplete data: we need to run the emulator.');
     else
-        disp('Not running emulator')
+        disp('Data is complete')
     end
 
-catch errload
+catch
 
     disp('Running the emulator...')
     addpath('Emulator-Main')
-    % Now do some emulation
-    run_emulation;
+    run_emulation; % Run LIF calculator for those images without an LIF
 
 end
 
+%% Plotting 
 
-%%
+% Cleanup workspace, except for folder paths
 clearvars -except *_folder
 
 load([Orbit_folder '/Orientation_Histograms.mat']);
@@ -85,12 +85,15 @@ load([Emulator_folder '/Emulator_Data.mat']);
 load([Metadata_folder '/Image_Metadata.mat']);
 
 % Now do some plotting
-addpath('Plotting');
+addpath(Plotting_folder);
+addpath(Script_folder)
 
 % Orbital orientation figure
 plot_orbital_data(Figure_folder,orientation_hist,lat_disc,orient_disc);
 
+%%
 % Figure of emulation on a single random image
+plot_single_image(Figure_folder,image_location,image_done,true_SIC,length_ice_measured,length_measured,sample_orients,sample_points);
 
-
-plot_single_image(Figure_folder,image_location,image_done,true_SIC,length_ice_measured,length_measured,sample_orients)
+% 
+plot_bias_data; 

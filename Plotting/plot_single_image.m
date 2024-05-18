@@ -1,43 +1,87 @@
-function plot_single_image(Figure_folder,image_location,image_done,true_SIC,length_ice_measured,length_measured,sample_orients)
+function plot_single_image(Figure_folder,image_location,image_done,true_SIC,length_ice_measured,length_measured,sample_orients,sample_points)
+% PLOT_SINGLE_IMAGE - figure of the emulator method applied to a random
+% image along with computation of LIF
+%
+% Syntax:  plot_single_image(Figure_folder, image_location, image_done, true_SIC, length_ice_measured, length_measured, sample_orients)
+%
+% Inputs:
+%    Figure_folder - Directory to save the output figure
+%    image_location - Cell array of image paths
+%    image_done - Array indicating completed LIF processing
+%    true_SIC - True sea ice concentration from classification
+%    length_ice_measured - Measurements of ice length
+%    length_measured - Measurements of total length
+%    sample_orients - Azimuthal orientation
+%    sample_points - tie points within image of the drawn SRGTs
+% Outputs:
+%    Outputs: image_ind - index of the image plotted
+%             emulator-example.pdf saved in Figure_folder.
+%     
+% Author: Christopher Horvat
+% Date: 02-May-2024
 
-% This produces a bias plot
+% Create the figure
+figure(1)
+clf
 
-usable = find(image_done == 1 & true_SIC > .6);
+disp('------------------------')
+disp('Single image plot')
 
-length_ice_measured = length_ice_measured(usable,:);
-length_measured = length_measured(usable,:);
-true_SIC = true_SIC(usable);
-sample_orients = sample_orients(usable,:);
+set(gcf, 'WindowStyle', 'normal', ...
+    'Units', 'inches', ...
+    'PaperUnits', 'inches', ...
+    'Position', [0, 0, 6.5, 4.5], ...
+    'PaperPosition', [0, 0, 6.5, 3.5], ...
+    'PaperSize', [6.5, 3.5]);
 
-n_images = length(true_SIC);
-n_crossings = size(length_measured,2);
-n_perms = n_crossings;
+% These are the images we will consider. For just visual purposes we want
+% significant SIC - though this won't represent all imagery. 
+usable = find(image_done == 1 & true_SIC > .6 & true_SIC < .9);
 
-observed_SIC = nan(n_images,n_perms,n_crossings);
+% Take one of thsoe images.
+usable_image_ind = randi(length(usable),1); 
+image_ind = usable(usable_image_ind); 
+% image_ind = 9451; % fix for now while we do emulation
+% image_ind = 9374; % one of my favs
 
-for i = 1:length(true_SIC)
+fprintf('Using image %d \n',image_ind);
 
-    for j = 1:n_perms
+im_length = length_measured(image_ind,:); 
+im_ice_length = length_ice_measured(image_ind,:);
+im_true_SIC = true_SIC(image_ind); 
+im_orients = sample_orients(image_ind,:);
+im_sample_points = sample_points(image_ind,:);
 
-        % randomly permute the number of crossings
-        rp = randperm(n_crossings);
+n_crossings = size(im_length,2);
+perm_length = 50; 
+n_perms = 4*n_crossings;
 
-        observed_SIC(i,j,:) = cumsum(length_ice_measured(i,rp))./cumsum(length_measured(i,rp));
+im_meas_SIC = nan(n_perms,perm_length);
 
+for j = 1:n_perms
 
-    end
+    % randomly permute the number of crossings
+    % rp = randperm(n_crossings,perm_length);
+    rp = randi(n_crossings,[perm_length 1]); % % rp = randi(n_crossings,[n_crossings 1]); 
+    im_meas_SIC(j,:) = cumsum(im_ice_length(rp))./cumsum(im_length(rp));
+
 
 end
 
+im_bias = bsxfun(@minus,im_true_SIC,im_meas_SIC); 
+im_bias_std = squeeze(std(abs(im_bias),[],1));
+im_mean_LIF = squeeze(mean(im_meas_SIC,1));
+im_name = h5readatt(image_location{image_ind},'/','source_image');
 
-SIC_bias = bsxfun(@minus,true_SIC,observed_SIC);
+SIC = true_SIC(image_ind);
+LIF0 = im_ice_length./im_length; 
+LIFN = cumsum(im_ice_length)./cumsum(im_length); 
+[worst_amt,worst_track] = max(100*(abs(SIC-LIF0)));
+[cum_worst_amt,cum_worst_track] = max(100*(abs(SIC-LIFN)));
 
 %% First plot is of the image itself
 
-close
-image_ind = randi(length(usable),1); 
-
-surface_class = (h5read(image_location{usable(image_ind)},'/classification'));
+surface_class = (h5read(image_location{image_ind},'/classification'));
 % Gridding things
 surface_class(surface_class == 0) = -1;
 surface_class(surface_class > 1) = 0;
@@ -75,9 +119,8 @@ Xmeas = Xgrid(measurable);
 Ymeas = Ygrid(measurable);
 
 % Take a random set of X/Y points that are in the domain as tie points
-sample_points = randi(numel(Xmeas),[n_crossings 1]);
-sample_x = Xmeas(sample_points)';
-sample_y = Ymeas(sample_points)';
+sample_x = Xmeas(im_sample_points)';
+sample_y = Ymeas(im_sample_points)';
 
 % Longer than the image size. We just want to create the endpoints of
 % our "IS2" track intersecting the image
@@ -90,7 +133,7 @@ L= max(nx,ny);
 % triangle the azimuth plus the altitude is pi/2. So we subtract
 % the sampled azimuths from pi/2 to get the altitude angle.
 
-elevation_angle = pi/2 - pi*sample_orients(image_ind,:)/180;
+elevation_angle = pi/2 - pi*im_orients/180;
 
 xend = sample_x + L*cos(elevation_angle);
 xinit = sample_x - L*cos(elevation_angle);
@@ -102,58 +145,101 @@ yinit = sample_y - L*sin(elevation_angle);
 for j = 1:n_crossings
 
     scatter(sample_x(j),sample_y(j),50,'filled','MarkerFaceColor',[.8 .4 .4])
-    plot([xinit(j) xend(j)],[yinit(j) yend(j)],'k');
-    drawnow
+   
+    if j~= worst_track
+ 
+    plot([xinit(j) xend(j)],[yinit(j) yend(j)],'color',[.2 .2 .2],'linewidth',0.25);
+
+    else
+
+            plot([xinit(j) xend(j)],[yinit(j) yend(j)],'r','linewidth',1);
+
+    end
+%    drawnow
                   
 end
 
-title(h5readatt(image_location{image_ind},'/','source_image'),'interpreter','latex');
+title(strrep(im_name,'_','\_'),'interpreter','latex');
 
-Ax{2} = subplot('position',[.625 .7 .35 .2]);
-
-edges = 1:2:180; 
-p = histcounts(sample_orients(image_ind,:),1:2:180); 
-p = p / sum(p);
-centers = 0.5*(edges(1:end-1) + edges(2:end)); 
-
-bar(centers,p,'EdgeColor',[.8 .4 .4],'Facecolor',[.8 .4 .4]);
-xlabel('Azimuth');
-ylabel('Frequency'); 
-grid on; box on; 
-
-Ax{3} = subplot('position',[.625 .4 .35 .2]);
-plot(1:n_crossings,length_measured(image_ind,:),'Color',[.4 .4 .8]);
+Ax{2} = subplot('position',[.6 .6834 .35 .2167]);
+plot(1:n_crossings,im_length,'Color',[.4 .4 .8]);
 hold on
-plot(1:n_crossings,length_ice_measured(image_ind,:),'Color',[.8 .8 .8]);
+plot(1:n_crossings,im_ice_length,'Color',[.4 .4 .4]);
 grid on; box on; 
 ylabel('Length (m)'); 
-xlim([1 50])
-xlabel('Crossing No.')
+xlim([1 perm_length])
+ylim([0 nx+ny])
+leg = legend('Image Length','Ice Length','location','best');
+leg.ItemTokenSize = [5,5];
+
+title('SRGT measured lengths','interpreter','latex')
+set(gca,'xticklabel','')
+
+Ax{3} = subplot('position',[.6 .3917 .35 .2167]);
 
 
-Ax{4} = subplot('position',[.625 .1 .35 .2]);
-plot(1:n_crossings,cumsum(length_ice_measured(image_ind,:))./cumsum(length_measured(image_ind,:)),'Color','k','linewidth',2);
-yline(true_SIC(image_ind),'r')
+plot(1:n_crossings,cumsum(im_ice_length)./cumsum(im_length),'Color','k','linewidth',2);
 hold on
+drawnow
 
-Mplot = cumsum(length_ice_measured(image_ind,:))./cumsum(length_measured(image_ind,:));
-Splot = squeeze(std(abs(SIC_bias(image_ind,:,:)),[],2));
 
 % Take average SIC for each permutation as a function of crossing number
 % Want to see how they converge, so plot against the mean
-M2plot = squeeze(mean(observed_SIC(image_ind,:,:),2));
 
-% plot(1:n_crossings,Mplot,'b','linewidth',2); 
-plot(1:n_crossings,M2plot + Splot,'--k','linewidth',1); 
-plot(1:n_crossings,M2plot - Splot,'--k','linewidth',1); 
+% plot(1:n_crossings,,'--k','linewidth',1); 
+% plot(1:n_crossings,im_mean_LIF - im_bias_std,'--k','linewidth',1); 
+% 
+
+hold on
+ylimmer = get(gca,'ylim');
+if ylimmer(2) - ylimmer(1) < 0.2
+     ylimmer = im_true_SIC + [-0.15 0.15]; 
+     ylimmer(2) = min(ylimmer(2),1);
+     ylimmer(1) = max(ylimmer(1),0);
+end
+
+scatter(1:n_crossings,im_ice_length./im_length,10,'filled','markerfacecolor',[.8 .2 .2],'markeredgecolor','none'); 
+yline(true_SIC(image_ind),'color',[.2 .2 .8],'linewidth',1)
+
+% jbfill(1:n_crossings,im_mean_LIF + im_bias_std,im_mean_LIF - im_bias_std,[.4 .4 .4],[0 0 0]);
+
 grid on; box on; 
-xlim([1 50])
-xlabel('Crossing No.')
+
+
+ylim(ylimmer);
+xlim([1 perm_length])
 ylabel('%');
-
+title('LIF estimates','interpreter','latex')
 % Plot bias as a function of crossing
+set(gca,'xticklabel','')
+
+leg = legend('LIF_n','LIF_0','SIC','location','best');
+leg.ItemTokenSize = [5,5];
+
+Ax{4} = subplot('position',[.6 .1 .35 .2167]);
+
+plot(1:perm_length,mean(im_bias,1),'color','k')
+hold on
+jbfill(1:perm_length,mean(im_bias,1) + im_bias_std,mean(im_bias,1) - im_bias_std,[.4 .4 .4],[0 0 0]);
+hold off
+xlim([1 perm_length])
+
+ylimmer = get(gca,'ylim');
+if ylimmer(2) - ylimmer(1) < 0.1
+     ylimmer = mean(mean(im_bias,1)) + [-0.15 0.15]; 
+     ylimmer(2) = min(ylimmer(2),1);
+     ylimmer(1) = max(ylimmer(1),0);
+end
+
+xlabel('Crossing No.')
+yline(im_true_SIC - LIFN(end),'-r');
 
 
+
+title('SRGT and LIF Bias','interpreter','latex')
+leg =legend('Mean LIF_n bias','\pm \sigma','B_i','location','best');
+leg.ItemTokenSize = [5,5];
+grid on; box on; 
 
 letter = {'(a)','(b)','(c)','(d)','(e)','(f)','(g)','(e)','(c)'};
 for i = 1:length(Ax)
@@ -168,7 +254,25 @@ for i = 1:length(Ax)
 
 end
 
+
+
+fprintf('True SIC is %2.2f percent \n',100*(SIC))
+fprintf('Long-term bias is %2.2f percent \n',100*(LIFN(end)-SIC))
+fprintf('Long-term standard deviation is %2.2f percent \n',100*im_bias_std(end))
+fprintf('Mean LIF_0 difference is %2.2f pm %2.2f percent \n',100*(mean(LIF0)-SIC),100*std(LIF0 - SIC));
+fprintf('Max LIF_0 difference is %2.2f percent for track %d \n',worst_amt,worst_track)
+fprintf('That RGT has LIF_0 = %2.2f \n',100*LIF0(worst_track))
+fprintf('Max LIF_N difference is %2.2f percent for track %d \n',cum_worst_amt,cum_worst_track)
+
+
+
+
 pos = [6.5 4];
 set(gcf,'windowstyle','normal','position',[0 0 pos],'paperposition',[0 0 pos],'papersize',pos,'units','inches','paperunits','inches');
 set(gcf,'windowstyle','normal','position',[0 0 pos],'paperposition',[0 0 pos],'papersize',pos,'units','inches','paperunits','inches');
-print([Figure_folder '/emulator-example.pdf'],'-dpdf','-r1200');
+
+try
+    print([Figure_folder '/emulator-example.pdf'],'-dpdf','-r1200');
+catch 
+    disp('Cant save');
+end
