@@ -83,15 +83,15 @@ for i = 1:length(image_list)
     loc = find(image_number == IDnum & floor(image_timer) == IDday);
 
     if length(loc) > 1
+
         disp('error')
     
     else 
         
         if isempty(loc)
-            disp('not located');
 
+            disp('not located');
             imagelocID(i) = nan; 
-            used(loc) = 0;
 
         else % suitably done
 
