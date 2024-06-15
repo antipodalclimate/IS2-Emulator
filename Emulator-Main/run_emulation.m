@@ -10,8 +10,21 @@ savestr = [Code_folder '/Emulator-Main/Emulator_Data'];
 
 try load([Emulator_folder '/Emulator_Data.mat'])
 
-    fprintf('Have done %d images out of %d \n',sum(image_done~=0),length(image_done));
+    fprintf('Have done %d images out of %d \n',sum(image_done~=0),n_images);
+        
+    if n_images > length(image_done)
 
+        % We have added new data
+        length_measured(end:n_images,:) = nan;
+        sample_orients(end:n_images,:) = nan;
+        length_ice_measured(end:n_images,:) = nan;
+        sample_points(end:n_images,:) = nan;
+        true_SIC(end:n_images)  = nan;
+        true_OW(end:n_images) = nan;
+        image_done(end:n_images)  = 0;
+        
+    end
+    
 catch errload
 
     disp('No data yet')
@@ -236,13 +249,9 @@ for block_ind = 1:nblocks
         sample_orients(blockids,:) = TEMP_sample_orients;
         sample_points(blockids,:) = TEMP_sample_points; 
 
-        save(savestr,'image_location','length_measured','length_ice_measured','image_done','sample_orients','sample_points','true_SIC','image_done')
+        save(savestr,'length_measured','length_ice_measured','image_done','sample_orients','sample_points','true_SIC','image_done')
 
     end % if we have any undone images
-
-   
-
-
 
 end % block loop
 

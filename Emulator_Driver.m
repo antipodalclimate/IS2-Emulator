@@ -67,9 +67,9 @@ try load([Emulator_folder '/Emulator_Data.mat'])
         disp('Data is complete')
     end
 
-catch
+catch err_em
 
-    disp('Running the emulator...')
+    disp(err_em.message)
     addpath('Emulator-Main')
     run_emulation; % Run LIF calculator for those images without an LIF
 
