@@ -36,12 +36,12 @@ set(gcf, 'WindowStyle', 'normal', ...
 
 % These are the images we will consider. For just visual purposes we want
 % significant SIC - though this won't represent all imagery. 
-usable = find(image_done == 1 & true_SIC > .6 & true_SIC < .9);
+usable = find(image_done == 1 & true_SIC > .8 & true_SIC < .95);
 
 % Take one of thsoe images.
 usable_image_ind = randi(length(usable),1); 
 image_ind = usable(usable_image_ind); 
-% image_ind = 9451; % fix for now while we do emulation
+  image_ind = 37391; % fix for now while we do emulation
 % image_ind = 9374; % one of my favs
 
 fprintf('Using image %d \n',image_ind);
@@ -53,7 +53,7 @@ im_orients = sample_orients(image_ind,:);
 im_sample_points = sample_points(image_ind,:);
 
 n_crossings = size(im_length,2);
-perm_length = 50; 
+perm_length = 100; 
 n_perms = 4*n_crossings;
 
 im_meas_SIC = nan(n_perms,perm_length);

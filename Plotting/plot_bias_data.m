@@ -7,7 +7,10 @@ usable = true_SIC < .99 & true_SIC > 0.1 & ~isnan(true_SIC);
 % permutations of those crossings
 n_images = sum(usable);
 n_crossings = size(length_measured,2);
-perm_length = 50; 
+
+% How long of a permutation
+perm_length = 100; 
+% Number of permutations we choose
 n_perms = 4*n_crossings;
 
 
@@ -74,19 +77,34 @@ Bias_std_all = 100*squeeze(std(SIC_bias,[],[1 3],'omitnan'));
 Bias_abs_595_all = 100*squeeze(prctile(abs(SIC_bias),100*[exp(-2) 1 - exp(-2)],[1 3])); 
 Bias_abs_595_barfirst = 100*squeeze(prctile(abs(mean(SIC_bias,3)),100*[exp(-2) 1 - exp(-2)],[1])); 
 
+%% 
+
 figure(1)
 clf
 
-subplot(321)
-histogram(Bias_i)
-
-subplot(322)
-histogram(Std_i); 
+subplot(421)
+histogram(100*Bias_i,[-10:.1:10],'Normalization','probability','facecolor',[.8 .4 .4],'edgecolor','none');
+grid on; box on; 
+xlabel('B_i'); ylabel('PDF');
+title('Best-case bias $B_i = LIF_i^* - SIC$','interpreter','latex')
+xline(prctile(100*Bias_i,75),'k','LineWidth',1)
+xline(prctile(100*Bias_i,25),'k','LineWidth',1)
+set(gca,'yticklabel','')
+xlim([-5 5])
+subplot(422)
+histogram(Std_i,[0:.05:5],'Normalization','probability','facecolor',[.8 .4 .4],'edgecolor','none');
+grid on; box on; 
+xlabel('B_i'); ylabel('PDF');
+title('Path-based variance in $B_i$','interpreter','latex')
+xline(prctile(Std_i,75),'k','LineWidth',1)
+xline(prctile(Std_i,25),'k','LineWidth',1)
+set(gca,'yticklabel','')
+xlim([0 3])
 
 %%
 
 
-subplot(312)
+subplot(412)
 % Plot the mean over all images and permutations as a function of crossing
 % number
 plot(1:perm_length,Bias_n,'k','linewidth',1); 
@@ -97,7 +115,7 @@ grid on; box on;
 xlim([1 perm_length])
 title('Mean Biases and Confidence Intervals','interpreter','latex')
 
-subplot(313)
+subplot(413)
 % Now looking at absolute biases
 plot(1:perm_length,Bias_abs_n,'k','linewidth',1); 
 hold on
@@ -125,18 +143,18 @@ title('Absolute Biases and Confidence Intervals','interpreter','latex')
 % legend('Crossing 0','Crossing 5','Crossing 10');
 
 %% 
-subplot(313)
+subplot(414)
 r = 100*sum(abs(SIC_bias) < 0.025,[1 3]) / numel(SIC_bias(:,1,:));
 s = 100*sum(abs(SIC_bias) < 0.05,[1 3]) / numel(SIC_bias(:,1,:));
 
-plot(1:n_crossings,r,'k')
+plot(1:perm_length,r,'k')
 hold on; 
 
-plot(1:n_crossings,s,'r')
+plot(1:perm_length,s,'r')
 grid on; box on; 
-xlim([1 n_crossings]); 
+xlim([1 perm_length]); 
 ylim([0 100])
-legend('Bias < 2.5\%','Bias < 5\%')
+legend('Bias < 2.5%','Bias < 5%')
 
 allAxesInFigure = findall(gcf,'type','axes');
 letter = {'(a)','(b)','(c)','(d)','(e)','(f)','(g)','(e)','(c)'};

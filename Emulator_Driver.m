@@ -85,7 +85,7 @@ load([Emulator_folder '/Emulator_Data.mat']);
 load([Metadata_folder '/Image_Metadata.mat']);
 
 % Now do some plotting
-addpath(Plotting_folder);
+addpath(Plotting_folder)
 addpath(Script_folder)
 
 % Orbital orientation figure

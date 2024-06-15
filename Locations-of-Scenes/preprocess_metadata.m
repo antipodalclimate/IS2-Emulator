@@ -36,6 +36,13 @@ for i = 1:length(imagery_metadata)
     image_number{i} = temp.ImageNumber;
     image_latitude{i} = temp.Latitude;
     image_longitude{i} = temp.Longitude;
+
+    if max(temp.SIC < 2)
+       
+        temp.SIC = 100*temp.SIC; 
+    
+    end
+
     image_SIC{i} = temp.SIC;
     image_MPF{i} = temp.MPF;
 
@@ -88,6 +95,7 @@ for i = 1:length(image_list)
     else 
         
         if isempty(loc)
+
             disp('not located');
 
             imagelocID(i) = nan; 
@@ -117,5 +125,5 @@ end
 %%
 
 fprintf('Image metadata saved to %s \n',savestr)
-save(savestr,'image_latitude','image_longitude','image_SIC','image_MPF','image_timer','image_location')
+save(savestr,'image_latitude','image_longitude','image_SIC','image_MPF','image_timer','image_location','imagelocID');
 
