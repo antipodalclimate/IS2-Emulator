@@ -23,7 +23,7 @@ Figure_folder = '/Users/chorvat/Dropbox (Brown)/Apps/Overleaf/IS2-Concentration-
 % See if we have latitude-based orientation histograms. This is easy to
 % make with the IS2 KMLs so shouldn't be a problem. 
 
-try load([Orbit_folder '/Orientation_Histograms.mat'])
+try load([Data_folder '/Orbit-Data/Orientation_Histograms.mat'])
 
     disp('Loaded Orbital Data');
 
@@ -39,7 +39,7 @@ end
 
 %% Load or create image metadata
 
-try load([Metadata_folder '/Image_Metadata.mat'])
+try load([Data_folder 'Optical-Data/Image_Metadata.mat'])
 
         fprintf('Loaded Image MetaData for %d Images \n',length(image_SIC));
 

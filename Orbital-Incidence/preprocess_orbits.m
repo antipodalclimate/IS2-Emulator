@@ -1,5 +1,5 @@
 % This code examines the angle of incidence of IS2 RGTs
-savestr = [Orbit_folder '/Orientation_Histograms']; 
+savestr = [Data_folder 'Orbit-Data/Orientation_Histograms']; 
 
 disp('Creating Histograms of Azimuthal angles from IS2 KMLs')
 
