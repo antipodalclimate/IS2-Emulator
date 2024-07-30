@@ -6,6 +6,7 @@ close all
 % Define the folder paths relative to the current directory
 Code_folder = pwd;
 Data_folder = [Code_folder '/Data']; % Adjust based on your local setup
+Output_folder = [Code_folder '/Output']; % Adjust based on your local setup
 Orbit_folder = [Code_folder '/Orbital-Incidence'];
 Metadata_folder = [Code_folder '/Locations-of-Scenes'];
 Emulator_folder = [Code_folder '/Emulator-Main'];
@@ -23,7 +24,7 @@ Figure_folder = '/Users/chorvat/Dropbox (Brown)/Apps/Overleaf/IS2-Concentration-
 % See if we have latitude-based orientation histograms. This is easy to
 % make with the IS2 KMLs so shouldn't be a problem. 
 
-try load([Data_folder '/Orbit-Data/Orientation_Histograms.mat'])
+try load([Output_folder '/Orientation_Histograms.mat'])
 
     disp('Loaded Orbital Data');
 
@@ -39,7 +40,7 @@ end
 
 %% Load or create image metadata
 
-try load([Data_folder 'Optical-Data/Image_Metadata.mat'])
+try load([Output_folder '/Image_Metadata.mat'])
 
         fprintf('Loaded Image MetaData for %d Images \n',length(image_SIC));
 
@@ -57,7 +58,7 @@ end
 
 %% Load LIF data and decide whether to run emulation
 
-try load([Emulator_folder '/Emulator_Data.mat'])
+try load([Output_folder '/Emulator_Data.mat'])
     
     disp('Loaded Existing Emulation Data')
 
@@ -82,9 +83,9 @@ end
 % Cleanup workspace, except for folder paths
 clearvars -except *_folder
 
-load([Orbit_folder '/Orientation_Histograms.mat']);
-load([Emulator_folder '/Emulator_Data.mat']);
-load([Metadata_folder '/Image_Metadata.mat']);
+load([Output_folder '/Orientation_Histograms.mat']);
+load([Output_folder '/Emulator_Data.mat']);
+load([Output_folder '/Image_Metadata.mat']);
 
 % Now do some plotting
 addpath(Plotting_folder)

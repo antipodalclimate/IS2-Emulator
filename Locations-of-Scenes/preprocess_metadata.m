@@ -1,8 +1,8 @@
 %% Import data from text files
 
-savestr = [Data_folder 'Optical-Data/' 'Image_Metadata'];
+savestr = [Output_folder '/Image_Metadata'];
 
-imagery_metadata = dir([Data_folder '/NOAA*.txt']);
+imagery_metadata = dir([Data_folder '/Optical-Data/NOAA*.txt']);
 
 %% Set up the Import Options and import the data
 opts = delimitedTextImportOptions("NumVariables", 12);
@@ -59,7 +59,7 @@ image_longitude = cell2mat(image_longitude);
 clear opts
 
 %% Get entire list of images
-image_list = dir([Data_folder '/*/*/*/*.h5']);
+image_list = dir([Data_folder '/Optical-Data/*/*/*/*.h5']);
 
 % Find the directory of the image corresponding to each metadata point
 image_location = cell(size(image_latitude));

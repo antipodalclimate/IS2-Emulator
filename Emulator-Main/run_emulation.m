@@ -4,7 +4,7 @@
 n_crossings = 100;
 n_images = length(image_location);
 
-savestr = [Data_folder 'Emulator-Data/Emulator_Data']; 
+savestr = [Output_folder '/Emulator_Data']; 
 
 % Initialize data
 
