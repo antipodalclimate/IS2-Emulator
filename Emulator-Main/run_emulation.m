@@ -4,11 +4,11 @@
 n_crossings = 100;
 n_images = length(image_location);
 
-savestr = [Code_folder '/Emulator-Main/Emulator_Data']; 
+savestr = [Data_folder 'Emulator-Data/Emulator_Data']; 
 
 % Initialize data
 
-try load([Emulator_folder '/Emulator_Data.mat'])
+try load(savestr)
 
     fprintf('Have done %d images out of %d \n',sum(image_done~=0),n_images);
         

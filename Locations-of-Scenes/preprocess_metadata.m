@@ -1,6 +1,6 @@
 %% Import data from text files
 
-savestr = [Metadata_folder '/' 'Image_Metadata'];
+savestr = [Data_folder 'Optical-Data/' 'Image_Metadata'];
 
 imagery_metadata = dir([Data_folder '/NOAA*.txt']);
 
