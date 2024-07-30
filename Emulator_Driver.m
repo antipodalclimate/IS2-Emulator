@@ -11,7 +11,9 @@ Metadata_folder = [Code_folder '/Locations-of-Scenes'];
 Emulator_folder = [Code_folder '/Emulator-Main'];
 Plotting_folder = [Code_folder '/Plotting']; 
 Script_folder = [Code_folder '/Scripts']; 
-Figure_folder = '~/Library/CloudStorage/Dropbox-Brown/Apps/Overleaf/IS2-Concentration-Part-2/Figures';
+
+% Figure_folder = '~/Library/CloudStorage/Dropbox-Brown/Apps/Overleaf/IS2-Concentration-Part-2/Figures';
+Figure_folder = '/Users/chorvat/Dropbox (Brown)/Apps/Overleaf/IS2-Concentration-Part-2/Figures';
 
 %% Load or create orbital data
 
@@ -95,5 +97,9 @@ plot_orbital_data(Figure_folder,orientation_hist,lat_disc,orient_disc);
 % Figure of emulation on a single random image
 plot_single_image(Figure_folder,image_location,image_done,true_SIC,length_ice_measured,length_measured,sample_orients,sample_points);
 
-% 
+
+
+%% Now examine 
 plot_bias_data; 
+
+%% Now plot the LIF global biases vs non
