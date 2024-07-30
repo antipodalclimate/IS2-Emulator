@@ -36,13 +36,6 @@ for i = 1:length(imagery_metadata)
     image_number{i} = temp.ImageNumber;
     image_latitude{i} = temp.Latitude;
     image_longitude{i} = temp.Longitude;
-
-    if max(temp.SIC < 2)
-       
-        temp.SIC = 100*temp.SIC; 
-    
-    end
-
     image_SIC{i} = temp.SIC;
     image_MPF{i} = temp.MPF;
 
@@ -90,6 +83,7 @@ for i = 1:length(image_list)
     loc = find(image_number == IDnum & floor(image_timer) == IDday);
 
     if length(loc) > 1
+
         disp('error')
     
     else 
@@ -97,9 +91,7 @@ for i = 1:length(image_list)
         if isempty(loc)
 
             disp('not located');
-
             imagelocID(i) = nan; 
-            used(loc) = 0;
 
         else % suitably done
 
@@ -125,5 +117,5 @@ end
 %%
 
 fprintf('Image metadata saved to %s \n',savestr)
-save(savestr,'image_latitude','image_longitude','image_SIC','image_MPF','image_timer','image_location','imagelocID');
+save(savestr,'image_latitude','image_longitude','image_SIC','image_MPF','image_timer','image_location')
 

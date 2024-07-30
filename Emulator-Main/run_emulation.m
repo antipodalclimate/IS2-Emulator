@@ -1,7 +1,7 @@
 % Run-Emulator
 % this code takes in optically-classified imagery, identifies the latitude,
 % and draws from a distribution of potential satellite angles.
-n_crossings = 50;
+n_crossings = 100;
 n_images = length(image_location);
 
 savestr = [Code_folder '/Emulator-Main/Emulator_Data']; 
@@ -10,12 +10,25 @@ savestr = [Code_folder '/Emulator-Main/Emulator_Data'];
 
 try load([Emulator_folder '/Emulator_Data.mat'])
 
-    fprintf('Have done %d images out of %d \n',sum(image_done~=0),length(image_done));
+    fprintf('Have done %d images out of %d \n',sum(image_done~=0),n_images);
+        
+    if n_images > length(image_done)
 
+        % We have added new data
+        length_measured(end:n_images,:) = nan;
+        sample_orients(end:n_images,:) = nan;
+        length_ice_measured(end:n_images,:) = nan;
+        sample_points(end:n_images,:) = nan;
+        true_SIC(end:n_images)  = nan;
+        true_OW(end:n_images) = nan;
+        image_done(end:n_images)  = 0;
+        
+    end
+    
 catch errload
 
     disp('No data yet')
-    [length_measured,sample_orients,length_ice_measured] = deal(nan(n_images,n_crossings));
+    [length_measured,sample_orients,length_ice_measured,sample_points] = deal(nan(n_images,n_crossings));
     [true_SIC,true_OW] = deal(nan(n_images,1));
     image_done = zeros(n_images,1);
 
@@ -33,6 +46,11 @@ block_length = 100;
 
 nblocks = ceil(n_images/block_length);
 
+try
+parpool(4) 
+catch 
+
+end
 
 for block_ind = 1:nblocks
 
@@ -45,6 +63,10 @@ for block_ind = 1:nblocks
     TEMP_length_measured = length_measured(blockids,:);
     TEMP_length_ice_measured = length_ice_measured(blockids,:);
     TEMP_sample_orients = sample_orients(blockids,:);
+    TEMP_sample_points = sample_points(blockids,:);
+
+    % TEMP_sample_x = sample_x(blockids,:); 
+    % TEMP_sample_y = sample_x(blockids,:); 
 
     % Parallelize the sub-blocks
 
@@ -55,7 +77,7 @@ for block_ind = 1:nblocks
         disp('------------------------------');
 
 
-        for block_subind = 1:length(blockids)
+        parfor block_subind = 1:length(blockids)
 
             % Index of the image itself in the overall dataset, not just
             % the sub block. 
@@ -123,12 +145,13 @@ for block_ind = 1:nblocks
 
 
                     % Take a random set of X/Y points that are in the domain as tie points
-                    sample_points = randi(numel(Xmeas),[n_crossings 1]);
+                    TEMP_sample_points(block_subind,:) = randi(numel(Xmeas),[n_crossings 1]);
                     % Only allow x/y samples that are actually measured. This may have a
                     % slight bias in the tie points if there are more X than Y points - not
                     % 100% sure. It might not.
-                    sample_x = Xmeas(sample_points)';
-                    sample_y = Ymeas(sample_points)';
+                    
+                    sample_x = Xmeas(TEMP_sample_points(block_subind,:))';
+                    sample_y  = Ymeas(TEMP_sample_points(block_subind,:))';
 
                     % Longer than the image size. We just want to create the endpoints of
                     % our "IS2" track intersecting the image
@@ -224,13 +247,11 @@ for block_ind = 1:nblocks
         length_ice_measured(blockids,:) = TEMP_length_ice_measured;
         true_SIC(blockids) = TEMP_true_SIC;
         sample_orients(blockids,:) = TEMP_sample_orients;
-        save(savestr,'image_location','length_measured','length_ice_measured','image_done','sample_orients','true_SIC','image_done')
+        sample_points(blockids,:) = TEMP_sample_points; 
+
+        save(savestr,'length_measured','length_ice_measured','image_done','sample_orients','sample_points','true_SIC','image_done')
 
     end % if we have any undone images
-
-   
-
-
 
 end % block loop
 
