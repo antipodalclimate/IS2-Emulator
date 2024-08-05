@@ -80,27 +80,3 @@ end
 
 %% Plotting 
 
-% Cleanup workspace, except for folder paths
-clearvars -except *_folder
-
-load([Output_folder '/Orientation_Histograms.mat']);
-load([Output_folder '/Emulator_Data.mat']);
-load([Output_folder '/Image_Metadata.mat']);
-
-% Now do some plotting
-addpath(Plotting_folder)
-addpath(Script_folder)
-
-% Orbital orientation figure
-plot_orbital_data(Figure_folder,orientation_hist,lat_disc,orient_disc);
-
-%%
-% Figure of emulation on a single random image
-plot_single_image(Figure_folder,image_location,image_done,true_SIC,length_ice_measured,length_measured,sample_orients,sample_points);
-
-
-
-%% Now examine 
-plot_bias_data; 
-
-%% Now plot the LIF global biases vs non
