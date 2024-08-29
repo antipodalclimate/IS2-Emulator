@@ -1,6 +1,6 @@
 # IS2-Emulator
 
-First commit - code that uses data from Madelyn Stewart and an initial code for generating lines above the sea ice surface. This is used in Horvat et al (2024) and Buckley et al (2024)
+First commit - code generates lines above the sea ice surface. This is used in Horvat et al (2024) and Buckley et al (2024)
 
 Updated now for improved speed and physical realism. Code now draws from realistic orientations (azimuths) of IS2 RGTs overflying any scene. It uses a parameteric model for the IS2 flyover to generate segments in the image. Currently, segments are pixel-by-pixel. 
 
